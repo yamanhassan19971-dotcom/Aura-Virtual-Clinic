@@ -1,0 +1,218 @@
+{
+  "common": {
+    "appName": "أورا لإدارة العيادات السنية",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "search": "بحث",
+    "loading": "جارٍ التحميل...",
+    "back": "رجوع",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "optional": "اختياري",
+    "notes": "ملاحظات",
+    "phone": "الهاتف",
+    "dob": "تاريخ الميلاد",
+    "patientId": "رقم المريض",
+    "minutes": "دقيقة",
+    "min": "د",
+    "unknownError": "تعذّر حفظ هذا الإجراء. يرجى المحاولة مرة أخرى.",
+    "signOut": "تسجيل الخروج"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "appointments": "المواعيد",
+    "patients": "المرضى",
+    "treatmentPlans": "خطط العلاج",
+    "clinical": "السجل السريري",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "comingSoon": "قادم في مرحلة لاحقة",
+    "location": "الفرع"
+  },
+  "login": {
+    "title": "تسجيل الدخول إلى أورا",
+    "subtitle": "عيادة دمشق الرئيسية",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "demoHint": "حسابات تجريبية: admin@aura.dev، manager@aura.dev، reception@aura.dev، yaman@aura.dev — كلمة المرور Passw0rd!"
+  },
+  "language": {
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "diary": {
+    "title": "دفتر المواعيد",
+    "previousDay": "اليوم السابق",
+    "nextDay": "اليوم التالي",
+    "today": "اليوم",
+    "jumpToNow": "الانتقال إلى الآن",
+    "practitioners": "الأطباء",
+    "allPractitioners": "الكل",
+    "location": "الفرع",
+    "timeScale": "مقياس الوقت",
+    "gapLabel": "فارغ",
+    "newAppointment": "موعد جديد",
+    "now": "الآن",
+    "noPractitionersSelected": "اختر طبيبًا واحدًا على الأقل لعرض الدفتر.",
+    "outsideHours": "خارج ساعات الدوام"
+  },
+  "status": {
+    "PENDING": "قيد الانتظار",
+    "CONFIRMED": "مؤكد",
+    "ARRIVED": "وصل",
+    "IN_SURGERY": "في العيادة",
+    "COMPLETED": "مكتمل",
+    "CANCELLED": "ملغى",
+    "FTA": "لم يحضر"
+  },
+  "summary": {
+    "title": "حركة مرضى اليوم",
+    "appointments": "المواعيد",
+    "PENDING": "قيد الانتظار",
+    "CONFIRMED": "مؤكد",
+    "ARRIVED": "وصل",
+    "IN_SURGERY": "في العيادة",
+    "COMPLETED": "مكتمل",
+    "CANCELLED": "ملغى",
+    "FTA": "لم يحضر",
+    "clearFilter": "إلغاء التصفية"
+  },
+  "waitingRoom": {
+    "title": "غرفة الانتظار",
+    "patientsWaiting": "{count, plural, =0 {لا يوجد مرضى بالانتظار} one {مريض واحد بالانتظار} other {# مرضى بالانتظار}}",
+    "arrivedAt": "وصل الساعة {time}",
+    "waitingMinutes": "الانتظار منذ {minutes} د",
+    "empty": "لا يوجد أحد بالانتظار حاليًا."
+  },
+  "inSurgery": {
+    "title": "في العيادة الآن",
+    "startedAt": "بدأ الساعة {time}",
+    "empty": "لا يوجد مرضى في العيادة حاليًا."
+  },
+  "booking": {
+    "titleNew": "موعد جديد",
+    "titleEdit": "تعديل الموعد",
+    "patient": "المريض",
+    "searchPatient": "ابحث عن مريض...",
+    "newPatient": "+ مريض جديد",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "duration": "المدة",
+    "practitioner": "الطبيب",
+    "room": "غرفة العلاج",
+    "reason": "سبب الزيارة",
+    "status": "الحالة",
+    "notes": "ملاحظات",
+    "cancelBtn": "إلغاء",
+    "bookBtn": "حجز الموعد",
+    "saveBtn": "حفظ التعديلات",
+    "selectPatient": "اختر مريضًا للمتابعة",
+    "conflictTitle": "تعارض في المواعيد",
+    "conflictBody": "لدى {practitioner} موعد آخر في هذا الوقت:",
+    "conflictQuestion": "هل تريد المتابعة؟",
+    "overrideWarning": "يتعارض هذا الموعد مع موعد آخر.",
+    "overrideReason": "سبب تجاوز التعارض",
+    "continueAnyway": "احجز رغم ذلك",
+    "notPermittedOverride": "يمكن فقط للمدير أو مدير العيادة تجاوز تعارض في الجدول.",
+    "createdToast": "تم حجز الموعد",
+    "updatedToast": "تم تحديث الموعد"
+  },
+  "patientSearch": {
+    "placeholder": "ابحث بالاسم أو الهاتف أو رقم المريض أو تاريخ الميلاد",
+    "noResults": "لم يتم العثور على مرضى.",
+    "typeToSearch": "ابدأ الكتابة للبحث عن المرضى."
+  },
+  "newPatient": {
+    "title": "مريض جديد",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "dob": "تاريخ الميلاد",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "create": "إنشاء المريض",
+    "cancel": "إلغاء"
+  },
+  "panel": {
+    "quickActions": "إجراءات سريعة",
+    "moreActions": "المزيد من الإجراءات",
+    "markConfirmed": "تأكيد",
+    "markArrived": "وصل",
+    "markInSurgery": "في العيادة",
+    "markCompleted": "إكمال",
+    "edit": "تعديل",
+    "reschedule": "إعادة جدولة",
+    "cancelAppt": "إلغاء",
+    "markFta": "تحديد كـ لم يحضر",
+    "openPatient": "فتح ملف المريض",
+    "statusHistory": "سجل الحالة",
+    "patientInfo": "المريض",
+    "appointmentInfo": "الموعد",
+    "conflictOverridden": "تم الحجز مع تجاوز تعارض"
+  },
+  "cancelDialog": {
+    "title": "إلغاء الموعد",
+    "reasonLabel": "السبب",
+    "reasons": {
+      "PATIENT_CANCELLED": "ألغى المريض الموعد",
+      "CLINIC_CANCELLED": "ألغت العيادة الموعد",
+      "RESCHEDULED": "تمت إعادة الجدولة",
+      "OTHER": "سبب آخر"
+    },
+    "notes": "ملاحظات",
+    "confirmBtn": "إلغاء الموعد",
+    "cancelBtn": "الإبقاء على الموعد",
+    "confirmQuestion": "هل تريد إلغاء هذا الموعد؟"
+  },
+  "ftaDialog": {
+    "title": "تحديد كـ لم يحضر",
+    "confirmQuestion": "هل تريد تحديد هذا الموعد كـ «لم يحضر»؟",
+    "reasonLabel": "السبب",
+    "reasons": {
+      "DID_NOT_ATTEND": "لم يحضر",
+      "NO_RESPONSE": "لا يوجد رد",
+      "FORGOT_APPOINTMENT": "نسي الموعد",
+      "OTHER": "سبب آخر"
+    },
+    "notes": "ملاحظات",
+    "confirmBtn": "تحديد كـ لم يحضر",
+    "cancelBtn": "إلغاء"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "clinicians": "الأطباء",
+    "appointmentTypes": "أنواع المواعيد",
+    "workingHours": "ساعات الدوام",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "defaultDuration": "المدة الافتراضية",
+    "addClinician": "إضافة طبيب",
+    "addType": "إضافة نوع موعد",
+    "name": "الاسم",
+    "title_": "المسمى الوظيفي",
+    "colour": "اللون",
+    "defaultRoom": "الغرفة الافتراضية",
+    "weekday": "اليوم",
+    "startTime": "البداية",
+    "endTime": "النهاية",
+    "saved": "تم الحفظ"
+  },
+  "placeholder": {
+    "title": "قادم في المرحلة الثانية",
+    "body": "هذا القسم هو مكان مخصص لمرحلة لاحقة من نظام أورا لإدارة العيادات السنية."
+  },
+  "weekday": {
+    "0": "الأحد",
+    "1": "الإثنين",
+    "2": "الثلاثاء",
+    "3": "الأربعاء",
+    "4": "الخميس",
+    "5": "الجمعة",
+    "6": "السبت"
+  }
+}

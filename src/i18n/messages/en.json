@@ -1,0 +1,218 @@
+{
+  "common": {
+    "appName": "AURA Dental PMS",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "loading": "Loading...",
+    "back": "Back",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "optional": "optional",
+    "notes": "Notes",
+    "phone": "Phone",
+    "dob": "Date of birth",
+    "patientId": "Patient ID",
+    "minutes": "minutes",
+    "min": "min",
+    "unknownError": "We couldn't save this. Please try again.",
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "appointments": "Appointments",
+    "patients": "Patients",
+    "treatmentPlans": "Treatment Plans",
+    "clinical": "Clinical",
+    "reports": "Reports",
+    "settings": "Settings",
+    "comingSoon": "Coming in a later phase",
+    "location": "Location"
+  },
+  "login": {
+    "title": "Sign in to AURA",
+    "subtitle": "Damascus Main Clinic",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalidCredentials": "Incorrect email or password.",
+    "demoHint": "Demo accounts: admin@aura.dev, manager@aura.dev, reception@aura.dev, yaman@aura.dev — password Passw0rd!"
+  },
+  "language": {
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "diary": {
+    "title": "Appointment Diary",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "today": "Today",
+    "jumpToNow": "Jump to now",
+    "practitioners": "Practitioners",
+    "allPractitioners": "All",
+    "location": "Location",
+    "timeScale": "Time scale",
+    "gapLabel": "Empty",
+    "newAppointment": "New Appointment",
+    "now": "Now",
+    "noPractitionersSelected": "Select at least one practitioner to see the diary.",
+    "outsideHours": "Outside working hours"
+  },
+  "status": {
+    "PENDING": "Pending",
+    "CONFIRMED": "Confirmed",
+    "ARRIVED": "Arrived",
+    "IN_SURGERY": "In Surgery",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled",
+    "FTA": "FTA"
+  },
+  "summary": {
+    "title": "Today's Patient Flow",
+    "appointments": "Appointments",
+    "PENDING": "Pending",
+    "CONFIRMED": "Confirmed",
+    "ARRIVED": "Arrived",
+    "IN_SURGERY": "In Surgery",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled",
+    "FTA": "FTA",
+    "clearFilter": "Clear filter"
+  },
+  "waitingRoom": {
+    "title": "Waiting Room",
+    "patientsWaiting": "{count, plural, =0 {No patients waiting} one {# patient waiting} other {# patients waiting}}",
+    "arrivedAt": "Arrived {time}",
+    "waitingMinutes": "Waiting {minutes} min",
+    "empty": "No one is waiting right now."
+  },
+  "inSurgery": {
+    "title": "In Surgery",
+    "startedAt": "Started {time}",
+    "empty": "No patients in surgery right now."
+  },
+  "booking": {
+    "titleNew": "New Appointment",
+    "titleEdit": "Edit Appointment",
+    "patient": "Patient",
+    "searchPatient": "Search patient...",
+    "newPatient": "+ New Patient",
+    "date": "Date",
+    "time": "Time",
+    "duration": "Duration",
+    "practitioner": "Practitioner",
+    "room": "Room",
+    "reason": "Reason",
+    "status": "Status",
+    "notes": "Notes",
+    "cancelBtn": "Cancel",
+    "bookBtn": "Book Appointment",
+    "saveBtn": "Save Changes",
+    "selectPatient": "Select a patient to continue",
+    "conflictTitle": "Appointment conflict",
+    "conflictBody": "{practitioner} already has an appointment at this time:",
+    "conflictQuestion": "Do you want to continue?",
+    "overrideWarning": "This appointment overlaps with another appointment.",
+    "overrideReason": "Reason for override",
+    "continueAnyway": "Book Anyway",
+    "notPermittedOverride": "Only an Admin or Practice Manager can override a scheduling conflict.",
+    "createdToast": "Appointment booked",
+    "updatedToast": "Appointment updated"
+  },
+  "patientSearch": {
+    "placeholder": "Search by name, phone, patient ID or DOB",
+    "noResults": "No patients found.",
+    "typeToSearch": "Start typing to search patients."
+  },
+  "newPatient": {
+    "title": "New Patient",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "dob": "Date of birth",
+    "phone": "Phone",
+    "email": "Email",
+    "create": "Create Patient",
+    "cancel": "Cancel"
+  },
+  "panel": {
+    "quickActions": "Quick actions",
+    "moreActions": "More actions",
+    "markConfirmed": "Confirm",
+    "markArrived": "Arrived",
+    "markInSurgery": "In Surgery",
+    "markCompleted": "Complete",
+    "edit": "Edit",
+    "reschedule": "Reschedule",
+    "cancelAppt": "Cancel",
+    "markFta": "Mark FTA",
+    "openPatient": "Open Patient",
+    "statusHistory": "Status history",
+    "patientInfo": "Patient",
+    "appointmentInfo": "Appointment",
+    "conflictOverridden": "Booked with a conflict override"
+  },
+  "cancelDialog": {
+    "title": "Cancel Appointment",
+    "reasonLabel": "Reason",
+    "reasons": {
+      "PATIENT_CANCELLED": "Patient cancelled",
+      "CLINIC_CANCELLED": "Clinic cancelled",
+      "RESCHEDULED": "Rescheduled",
+      "OTHER": "Other"
+    },
+    "notes": "Notes",
+    "confirmBtn": "Cancel Appointment",
+    "cancelBtn": "Keep Appointment",
+    "confirmQuestion": "Cancel this appointment?"
+  },
+  "ftaDialog": {
+    "title": "Mark as FTA",
+    "confirmQuestion": "Mark appointment as FTA (Failed to Attend)?",
+    "reasonLabel": "Reason",
+    "reasons": {
+      "DID_NOT_ATTEND": "Did not attend",
+      "NO_RESPONSE": "No response",
+      "FORGOT_APPOINTMENT": "Forgot appointment",
+      "OTHER": "Other"
+    },
+    "notes": "Notes",
+    "confirmBtn": "Mark FTA",
+    "cancelBtn": "Cancel"
+  },
+  "settings": {
+    "title": "Settings",
+    "clinicians": "Clinicians",
+    "appointmentTypes": "Appointment Types",
+    "workingHours": "Working Hours",
+    "active": "Active",
+    "inactive": "Inactive",
+    "defaultDuration": "Default duration",
+    "addClinician": "Add Clinician",
+    "addType": "Add Appointment Type",
+    "name": "Name",
+    "title_": "Title",
+    "colour": "Colour",
+    "defaultRoom": "Default room",
+    "weekday": "Day",
+    "startTime": "Start",
+    "endTime": "End",
+    "saved": "Saved"
+  },
+  "placeholder": {
+    "title": "Coming in Phase 2",
+    "body": "This area is a placeholder for a future phase of AURA Dental PMS."
+  },
+  "weekday": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  }
+}

@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PRACTICE_MANAGER
+  RECEPTIONIST
+  CLINICIAN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  ARRIVED
+  IN_SURGERY
+  COMPLETED
+  CANCELLED
+  FTA
+}
+
+// A physical clinic location. Every clinical/scheduling record hangs off a
+// practice so Phase 2+ can add more locations without a schema change.
+model Practice {
+  id       String @id @default(cuid())
+  name     String
+  timezone String @default("Asia/Damascus")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rooms            Room[]
+  practitioners    Practitioner[]
+  patients         Patient[]
+  users            User[]
+  appointmentTypes AppointmentType[]
+  appointments     Appointment[]
+  workingHours     WorkingHours[]
+
+  @@map("practices")
+}
+
+model Room {
+  id         String  @id @default(cuid())
+  practiceId String  @map("practice_id")
+  name       String
+  active     Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice             Practice       @relation(fields: [practiceId], references: [id])
+  appointments         Appointment[]
+  defaultForPractitioners Practitioner[] @relation("DefaultRoom")
+
+  @@index([practiceId])
+  @@map("rooms")
+}
+
+// Login identity. Deliberately separate from Practitioner: not every user is
+// a clinician (receptionists, practice managers) and not every practitioner
+// necessarily has a login in Phase 1.
+model User {
+  id           String  @id @default(cuid())
+  practiceId   String  @map("practice_id")
+  email        String  @unique
+  passwordHash String  @map("password_hash")
+  name         String
+  role         Role
+  active       Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice           Practice                   @relation(fields: [practiceId], references: [id])
+  practitioner       Practitioner?
+  statusChangesMade  AppointmentStatusHistory[]
+  auditLogEntries    AuditLog[]
+  createdAppointments Appointment[]
+
+  @@index([practiceId])
+  @@map("users")
+}
+
+model Practitioner {
+  id            String  @id @default(cuid())
+  practiceId    String  @map("practice_id")
+  userId        String? @unique @map("user_id")
+  name          String
+  title         String // e.g. "Dentist", "Hygienist"
+  colorHex      String  @default("#3B82F6") @map("color_hex")
+  defaultRoomId String? @map("default_room_id")
+  active        Boolean @default(true)
+  sortOrder     Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice     Practice       @relation(fields: [practiceId], references: [id])
+  user         User?          @relation(fields: [userId], references: [id])
+  defaultRoom  Room?          @relation("DefaultRoom", fields: [defaultRoomId], references: [id])
+  appointments Appointment[]
+  workingHours WorkingHours[]
+
+  @@index([practiceId])
+  @@map("practitioners")
+}
+
+// Practice-wide rows have practitionerId = null; a practitioner-specific row
+// overrides the practice default for that weekday (Phase 2 hook, seeded
+// simply for now per the brief).
+model WorkingHours {
+  id             String  @id @default(cuid())
+  practiceId     String  @map("practice_id")
+  practitionerId String? @map("practitioner_id")
+  weekday        Int // 0 = Sunday .. 6 = Saturday
+  startMinute    Int     @map("start_minute")
+  endMinute      Int     @map("end_minute")
+
+  practice     Practice      @relation(fields: [practiceId], references: [id])
+  practitioner Practitioner? @relation(fields: [practitionerId], references: [id])
+
+  @@index([practiceId, weekday])
+  @@map("working_hours")
+}
+
+model Patient {
+  id          String   @id @default(cuid())
+  practiceId  String   @map("practice_id")
+  patientCode String   @unique @map("patient_code")
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  dateOfBirth DateTime @map("date_of_birth") @db.Date
+  phone       String?
+  email       String?
+  notes       String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice     Practice      @relation(fields: [practiceId], references: [id])
+  appointments Appointment[]
+
+  @@index([practiceId])
+  @@index([lastName, firstName])
+  @@map("patients")
+}
+
+model AppointmentType {
+  id                 String  @id @default(cuid())
+  practiceId         String  @map("practice_id")
+  name               String
+  defaultDurationMin Int     @map("default_duration_min")
+  colorHex           String  @default("#3B82F6") @map("color_hex")
+  active             Boolean @default(true)
+  sortOrder          Int     @default(0) @map("sort_order")
+
+  practice     Practice      @relation(fields: [practiceId], references: [id])
+  appointments Appointment[]
+
+  @@index([practiceId])
+  @@map("appointment_types")
+}
+
+// The single most important table in Phase 1. Every mutation to this model
+// must go through AppointmentService so conflict checks, permission checks,
+// status history and audit logging stay in one transaction. Rows are never
+// deleted; cancel/FTA are statuses with a stored reason and timestamp.
+model Appointment {
+  id                String            @id @default(cuid())
+  practiceId        String            @map("practice_id")
+  patientId         String            @map("patient_id")
+  practitionerId    String            @map("practitioner_id")
+  roomId            String            @map("room_id")
+  appointmentTypeId String            @map("appointment_type_id")
+  date              DateTime          @db.Date
+  startTime         DateTime          @map("start_time")
+  endTime           DateTime          @map("end_time")
+  durationMin       Int               @map("duration_min")
+  status            AppointmentStatus @default(PENDING)
+  notes             String?
+
+  conflictOverride       Boolean @default(false) @map("conflict_override")
+  conflictOverrideById   String? @map("conflict_override_by")
+  conflictOverrideReason String? @map("conflict_override_reason")
+
+  cancellationReason String? @map("cancellation_reason")
+  ftaReason          String? @map("fta_reason")
+
+  arrivedAt   DateTime? @map("arrived_at")
+  inSurgeryAt DateTime? @map("in_surgery_at")
+  completedAt DateTime? @map("completed_at")
+  cancelledAt DateTime? @map("cancelled_at")
+  ftaAt       DateTime? @map("fta_at")
+
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  practice        Practice                   @relation(fields: [practiceId], references: [id])
+  patient         Patient                    @relation(fields: [patientId], references: [id])
+  practitioner    Practitioner               @relation(fields: [practitionerId], references: [id])
+  room            Room                       @relation(fields: [roomId], references: [id])
+  appointmentType AppointmentType            @relation(fields: [appointmentTypeId], references: [id])
+  createdBy       User?                      @relation(fields: [createdById], references: [id])
+  statusHistory   AppointmentStatusHistory[]
+
+  @@index([practitionerId, date])
+  @@index([practiceId, date])
+  @@index([roomId, date])
+  @@map("appointments")
+}
+
+model AppointmentStatusHistory {
+  id             String             @id @default(cuid())
+  appointmentId  String             @map("appointment_id")
+  previousStatus AppointmentStatus? @map("previous_status")
+  newStatus      AppointmentStatus  @map("new_status")
+  changedById    String?            @map("changed_by")
+  changedAt      DateTime           @default(now()) @map("changed_at")
+  reason         String?
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  changedBy   User?       @relation(fields: [changedById], references: [id])
+
+  @@index([appointmentId])
+  @@map("appointment_status_history")
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String?  @map("user_id")
+  action        String
+  recordType    String   @map("record_type")
+  recordId      String   @map("record_id")
+  previousValue Json?    @map("previous_value")
+  newValue      Json?    @map("new_value")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([recordType, recordId])
+  @@map("audit_log")
+}

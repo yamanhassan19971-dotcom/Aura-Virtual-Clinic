@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --color-navy: #0f2747;
+  --color-navy-light: #17335e;
+  --color-blue: #3b82f6;
+  --color-white: #ffffff;
+  --color-surface: #f5f7fa;
+  --color-text: #172033;
+  --color-border: #e2e8f0;
+
+  --color-status-pending: #6b7280;
+  --color-status-pending-bg: #f1f2f4;
+  --color-status-confirmed: #1d4ed8;
+  --color-status-confirmed-bg: #e6efff;
+  --color-status-arrived: #b45309;
+  --color-status-arrived-bg: #fef3e0;
+  --color-status-insurgery: #1e3a8a;
+  --color-status-insurgery-bg: #dbe6ff;
+  --color-status-completed: #15803d;
+  --color-status-completed-bg: #e4f5ea;
+  --color-status-cancelled: #6b7280;
+  --color-status-cancelled-bg: #eceef1;
+  --color-status-fta: #b91c1c;
+  --color-status-fta-bg: #fdeaea;
+}
+
+@theme inline {
+  --color-navy: var(--color-navy);
+  --color-navy-light: var(--color-navy-light);
+  --color-blue: var(--color-blue);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-text);
+  --color-border: var(--color-border);
+  --font-sans: var(--font-latin), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-latin), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
