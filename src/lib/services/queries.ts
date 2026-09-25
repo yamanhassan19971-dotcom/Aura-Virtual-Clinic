@@ -88,6 +88,14 @@ export async function listWorkingHours(practiceId: string) {
   return prisma.workingHours.findMany({ where: { practiceId, practitionerId: null }, orderBy: { weekday: "asc" } });
 }
 
+export async function listUsers(practiceId: string) {
+  return prisma.user.findMany({
+    where: { practiceId, active: true },
+    select: { id: true, name: true, role: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function searchPatients(practiceId: string, query: string) {
   const q = query.trim();
   if (q.length === 0) return [];
@@ -111,6 +119,7 @@ export async function searchPatients(practiceId: string, query: string) {
   return prisma.patient.findMany({
     where: {
       practiceId,
+      status: { not: "ARCHIVED" },
       OR: [
         nameCondition,
         { patientCode: { contains: q, mode: "insensitive" } },

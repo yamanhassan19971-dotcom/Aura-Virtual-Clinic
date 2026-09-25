@@ -76,7 +76,7 @@ describe("appointment service", () => {
   });
 
   it("rejects a conflict override from a receptionist but allows it for a practice manager", async () => {
-    const { drA, roomA, roomB, examType, patient1, patient2, actors, practice } = await fixture();
+    const { drA, roomA, roomB, examType, patient1, patient2, actors } = await fixture();
 
     await createAppointment(actors.reception, {
       patientId: patient1.id,
@@ -99,18 +99,7 @@ describe("appointment service", () => {
       })
     ).rejects.toBeInstanceOf(PermissionError);
 
-    const managerUser = await prisma.user.create({
-      data: {
-        practiceId: practice.id,
-        email: "manager@test.local",
-        name: "Manager",
-        role: "PRACTICE_MANAGER",
-        passwordHash: "unused",
-      },
-    });
-    const manager = { id: managerUser.id, role: "PRACTICE_MANAGER" as const, practiceId: practice.id, practitionerId: null };
-
-    const overridden = await createAppointment(manager, {
+    const overridden = await createAppointment(actors.manager, {
       patientId: patient2.id,
       practitionerId: drA.id,
       roomId: roomB.id,
@@ -122,7 +111,7 @@ describe("appointment service", () => {
     });
 
     expect(overridden.conflictOverride).toBe(true);
-    expect(overridden.conflictOverrideById).toBe(managerUser.id);
+    expect(overridden.conflictOverrideById).toBe(actors.manager.id);
   });
 
   it("moves an appointment to a new time/practitioner and logs it", async () => {

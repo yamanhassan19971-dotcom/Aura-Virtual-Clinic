@@ -2,11 +2,22 @@ import {
   PrismaClient,
   AppointmentStatus,
   Role,
+  PatientStatus,
+  PatientContactMethod,
+  FamilyRelationType,
+  MedicalAnswerValue,
+  ClinicalNoteStatus,
+  DocumentCategory,
+  TaskStatus,
   type Practitioner,
   type AppointmentType,
   type Patient,
 } from "@prisma/client";
 import argon2 from "argon2";
+import { saveDocumentFile } from "../src/lib/documents/storage";
+import { MEDICAL_QUESTIONS } from "../src/lib/medical/question-catalog";
+import { PATIENT_FLAG_KEYS } from "../src/lib/patients/flag-catalog";
+import { encodeReason } from "../src/lib/services/codec";
 
 const prisma = new PrismaClient();
 
@@ -182,7 +193,16 @@ async function main() {
   }
 
   // Patients
-  const patientCount = 44;
+  const patientCount = 70;
+  const CITIES = ["Damascus", "Aleppo", "Homs", "Lattakia", "Tartus", "Hama"];
+  const ACQUISITION_SOURCES = ["GOOGLE", "INSTAGRAM", "FACEBOOK", "WHATSAPP", "REFERRAL", "EXISTING_PATIENT", "WALK_IN", "OTHER"];
+  const CONTACT_METHODS: PatientContactMethod[] = [
+    PatientContactMethod.PHONE,
+    PatientContactMethod.WHATSAPP,
+    PatientContactMethod.SMS,
+    PatientContactMethod.EMAIL,
+  ];
+  const EMERGENCY_RELATIONSHIPS = ["Spouse", "Parent", "Sibling", "Child", "Friend"];
   const patients: Patient[] = [];
   for (let i = 0; i < patientCount; i++) {
     const firstName = pick(FIRST_NAMES);
@@ -191,6 +211,11 @@ async function main() {
     const month = randInt(1, 12);
     const day = randInt(1, 28);
     const code = `A${pad(i + 1, 5)}`;
+    const gender = i % 2 === 0 ? "Female" : "Male";
+    const hasEmergencyContact = Math.random() < 0.6;
+    // A handful of patients are archived/inactive so the list page and
+    // "show archived" filter have something real to demonstrate.
+    const status = i < 3 ? PatientStatus.ARCHIVED : i < 6 ? PatientStatus.INACTIVE : PatientStatus.ACTIVE;
     const patient = await prisma.patient.upsert({
       where: { patientCode: code },
       update: {},
@@ -199,15 +224,48 @@ async function main() {
         patientCode: code,
         firstName,
         lastName,
+        status,
+        gender,
+        preferredLanguage: Math.random() < 0.5 ? "Arabic" : "English",
         dateOfBirth: new Date(Date.UTC(year, month - 1, day)),
         phone: `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`,
+        homePhone: Math.random() < 0.3 ? `+963 11 ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}` : null,
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.test`,
+        addressLine1: `${randInt(1, 200)} ${pick(["Al Thawra St", "Baghdad St", "Mezzeh Highway", "Shukri Al Quwatli Ave"])}`,
+        city: pick(CITIES),
+        country: "Syria",
+        emergencyContactName: hasEmergencyContact ? `${pick(FIRST_NAMES)} ${lastName}` : null,
+        emergencyContactRelationship: hasEmergencyContact ? pick(EMERGENCY_RELATIONSHIPS) : null,
+        emergencyContactPhone: hasEmergencyContact
+          ? `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`
+          : null,
+        preferredPractitionerId: Math.random() < 0.6 ? pick(practitioners).id : null,
+        acquisitionSource: pick(ACQUISITION_SOURCES),
+        preferredContactMethod: pick(CONTACT_METHODS),
+        recallPreference: Math.random() < 0.4 ? "6-month recall" : null,
+        createdById: adminUser.id,
       },
     });
     patients.push(patient);
   }
 
   await prisma.auditLog.deleteMany({ where: {} });
+
+  // Phase 2 records are regenerated fresh on every seed run — clear them
+  // (children before parents, and before appointments are wiped below,
+  // since ClinicalNote/PatientTask optionally reference an Appointment).
+  await prisma.clinicalNoteAmendment.deleteMany({ where: {} });
+  await prisma.clinicalNote.deleteMany({ where: {} });
+  await prisma.clinicalNoteTemplate.deleteMany({ where: {} });
+  await prisma.medicalHistoryAnswer.deleteMany({ where: {} });
+  await prisma.medicalHistory.deleteMany({ where: {} });
+  await prisma.medicalAlert.deleteMany({ where: {} });
+  await prisma.patientDocument.deleteMany({ where: {} });
+  await prisma.patientTask.deleteMany({ where: {} });
+  await prisma.patientNote.deleteMany({ where: {} });
+  await prisma.patientFlag.deleteMany({ where: {} });
+  await prisma.patientFamilyRelationship.deleteMany({ where: {} });
+
   await prisma.appointmentStatusHistory.deleteMany({ where: {} });
   await prisma.appointment.deleteMany({ where: {} });
 
@@ -482,12 +540,294 @@ async function main() {
     }
   }
 
+  // ---------------------------------------------------------------------
+  // Phase 2: family links, medical history/alerts, clinical notes, admin
+  // notes, documents, tasks, flags — varied scenarios across the patient
+  // list so every tab of the patient record has something real to show.
+  // ---------------------------------------------------------------------
+
+  // Family relationships — cluster consecutive patients into small families
+  // (a couple plus 1-2 children) rather than random pairs, so the "Family"
+  // section on the Details tab reads naturally.
+  let familyClusters = 0;
+  for (let i = 6; i + 3 < patients.length && familyClusters < 10; i += 6) {
+    const parentA = patients[i];
+    const parentB = patients[i + 1];
+    const childA = patients[i + 2];
+    await prisma.patientFamilyRelationship.create({
+      data: { patientId: parentA.id, relatedPatientId: parentB.id, relationType: FamilyRelationType.SPOUSE },
+    });
+    await prisma.patientFamilyRelationship.create({
+      data: { patientId: parentA.id, relatedPatientId: childA.id, relationType: FamilyRelationType.PARENT },
+    });
+    if (Math.random() < 0.5 && i + 3 < patients.length) {
+      const childB = patients[i + 3];
+      await prisma.patientFamilyRelationship.create({
+        data: { patientId: parentB.id, relatedPatientId: childB.id, relationType: FamilyRelationType.PARENT },
+      });
+    }
+    familyClusters++;
+  }
+
+  // Clinical note templates — a couple of practice-wide, one personal.
+  const noteTemplates = [
+    {
+      title: "Routine Examination",
+      body: "Full mouth examination performed. No new caries detected. Oral hygiene: good. Recall in 6 months.",
+      ownerUserId: null,
+    },
+    {
+      title: "Scale & Polish",
+      body: "Scale and polish completed. Gingival health improved since last visit. Advised on interdental brushing technique.",
+      ownerUserId: null,
+    },
+    {
+      title: "Composite Restoration",
+      body: "Local anaesthetic administered, well tolerated. Composite restoration placed. Post-operative advice given.",
+      ownerUserId: practitioners[0].userId,
+    },
+  ];
+  for (const tpl of noteTemplates) {
+    await prisma.clinicalNoteTemplate.create({ data: { practiceId: practice.id, ...tpl } });
+  }
+
+  // Medical history + alerts for ~70% of patients.
+  const YES_NO_QUESTIONS = MEDICAL_QUESTIONS.filter((q) => q.type === "YES_NO");
+  const FREE_TEXT_QUESTIONS = MEDICAL_QUESTIONS.filter((q) => q.type === "FREE_TEXT");
+  const SELECT_QUESTIONS = MEDICAL_QUESTIONS.filter((q) => q.type === "SELECT");
+  const SAMPLE_ALLERGY_DETAILS = ["Penicillin", "Latex gloves", "Ibuprofen", "Local anaesthetic (mild)"];
+  const SAMPLE_MEDICATIONS = ["Metformin 500mg", "Aspirin 75mg daily", "Warfarin", "None reported"];
+
+  let medicalHistoryCount = 0;
+  let alertCount = 0;
+  for (const patient of patients) {
+    if (Math.random() >= 0.7) continue;
+
+    const completedAt = new Date(Date.now() - randInt(0, 300) * 86400000);
+    const history = await prisma.medicalHistory.create({
+      data: {
+        patientId: patient.id,
+        status: "CURRENT",
+        completedAt,
+        completedById: adminUser.id,
+        notes: Math.random() < 0.2 ? "Patient generally in good health, no concerns raised." : null,
+      },
+    });
+    medicalHistoryCount++;
+
+    for (const q of YES_NO_QUESTIONS) {
+      if (Math.random() < 0.3) continue; // some questions left unanswered, like a real intake form
+      const roll = Math.random();
+      const answer: MedicalAnswerValue = roll < 0.12 ? MedicalAnswerValue.YES : roll < 0.92 ? MedicalAnswerValue.NO : MedicalAnswerValue.UNKNOWN;
+      const freeText =
+        answer === MedicalAnswerValue.YES && q.key.toLowerCase().includes("aller")
+          ? pick(SAMPLE_ALLERGY_DETAILS)
+          : null;
+      await prisma.medicalHistoryAnswer.create({
+        data: { medicalHistoryId: history.id, category: q.category, questionKey: q.key, answer, freeText },
+      });
+      if (q.alertOnYes && answer === MedicalAnswerValue.YES) {
+        await prisma.medicalAlert.create({
+          data: {
+            patientId: patient.id,
+            medicalHistoryId: history.id,
+            label: encodeReason(q.key, freeText),
+            createdById: adminUser.id,
+          },
+        });
+        alertCount++;
+      }
+    }
+
+    for (const q of FREE_TEXT_QUESTIONS) {
+      if (Math.random() < 0.55) continue;
+      await prisma.medicalHistoryAnswer.create({
+        data: { medicalHistoryId: history.id, category: q.category, questionKey: q.key, freeText: pick(SAMPLE_MEDICATIONS) },
+      });
+    }
+
+    for (const q of SELECT_QUESTIONS) {
+      const option = pick(q.options ?? ["NEVER"]);
+      await prisma.medicalHistoryAnswer.create({
+        data: { medicalHistoryId: history.id, category: q.category, questionKey: q.key, freeText: option },
+      });
+      if (q.alertOnValues?.includes(option)) {
+        await prisma.medicalAlert.create({
+          data: {
+            patientId: patient.id,
+            medicalHistoryId: history.id,
+            label: encodeReason(q.key, option),
+            createdById: adminUser.id,
+          },
+        });
+        alertCount++;
+      }
+    }
+  }
+
+  // A couple of manually-added, already-resolved alerts, to show the
+  // resolved/soft-delete path is populated too (never visible as active).
+  for (const patient of patients.slice(0, 2)) {
+    await prisma.medicalAlert.create({
+      data: {
+        patientId: patient.id,
+        label: "MANUAL::Reviewed at previous visit, no longer a concern",
+        active: false,
+        createdById: adminUser.id,
+        resolvedAt: new Date(),
+        resolvedById: adminUser.id,
+      },
+    });
+  }
+
+  // Clinical notes for ~55% of patients: 1-2 each, a mix of draft/signed,
+  // with a couple of amendments on signed notes.
+  const SAMPLE_NOTE_BODIES = [
+    "Patient attended for routine check-up. No new complaints. BPE recorded, all sextants score 1. Oral hygiene instruction given.",
+    "Presented with sensitivity on UL6. Examination revealed occlusal caries. Treatment plan discussed and agreed with patient.",
+    "Composite restoration placed on LR4 under local anaesthetic. Patient tolerated the procedure well, no complications.",
+    "Emergency attendance for dental pain. Diagnosed irreversible pulpitis on UR7. Referred for root canal treatment.",
+    "Recall examination. Gingival health improved since last hygiene visit. Recall interval confirmed at 6 months.",
+  ];
+  let clinicalNoteCount = 0;
+  for (const patient of patients) {
+    if (Math.random() >= 0.55) continue;
+    const noteRounds = randInt(1, 2);
+    for (let n = 0; n < noteRounds; n++) {
+      const practitioner = pick(practitioners);
+      const createdAt = new Date(Date.now() - randInt(1, 250) * 86400000);
+      const isSigned = Math.random() < 0.75;
+      const note = await prisma.clinicalNote.create({
+        data: {
+          practiceId: practice.id,
+          patientId: patient.id,
+          practitionerId: practitioner.id,
+          status: isSigned ? ClinicalNoteStatus.SIGNED : ClinicalNoteStatus.DRAFT,
+          content: pick(SAMPLE_NOTE_BODIES),
+          createdById: practitioner.userId ?? adminUser.id,
+          createdAt,
+          updatedAt: createdAt,
+          signedAt: isSigned ? new Date(createdAt.getTime() + 10 * 60000) : null,
+          signedById: isSigned ? (practitioner.userId ?? adminUser.id) : null,
+        },
+      });
+      clinicalNoteCount++;
+      if (isSigned && Math.random() < 0.25) {
+        await prisma.clinicalNoteAmendment.create({
+          data: {
+            clinicalNoteId: note.id,
+            content: "Correction: patient confirmed no known drug allergies (previously not recorded).",
+            createdById: practitioner.userId ?? adminUser.id,
+          },
+        });
+      }
+    }
+  }
+
+  // Administrative (non-clinical) patient notes for ~30% of patients.
+  const SAMPLE_ADMIN_NOTES = [
+    "Prefers afternoon appointments due to work schedule.",
+    "Requests reminder calls rather than SMS.",
+    "Nervous patient — appreciates a slower, more detailed explanation before treatment.",
+    "Usually brings a family member to appointments.",
+    "Prefers Dr Yaman Hassan where possible.",
+  ];
+  let adminNoteCount = 0;
+  for (const patient of patients) {
+    if (Math.random() >= 0.3) continue;
+    await prisma.patientNote.create({
+      data: { patientId: patient.id, content: pick(SAMPLE_ADMIN_NOTES), createdById: adminUser.id },
+    });
+    adminNoteCount++;
+  }
+
+  // Documents — a small synthetic PNG "radiograph"/"photo" for ~20% of
+  // patients, saved through the same storage helper the app uses, so
+  // download/preview work identically to a real upload.
+  const TINY_PNG = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64"
+  );
+  let documentCount = 0;
+  for (const patient of patients) {
+    if (Math.random() >= 0.2) continue;
+    const category = pick(Object.values(DocumentCategory));
+    const filename = `${category.toLowerCase()}-${patient.patientCode}.png`;
+    const storageKey = await saveDocumentFile({
+      practiceId: practice.id,
+      patientId: patient.id,
+      filename,
+      buffer: TINY_PNG,
+    });
+    await prisma.patientDocument.create({
+      data: {
+        patientId: patient.id,
+        filename,
+        storageKey,
+        mimeType: "image/png",
+        sizeBytes: TINY_PNG.byteLength,
+        category,
+        uploadedById: adminUser.id,
+      },
+    });
+    documentCount++;
+  }
+
+  // Tasks for ~25% of patients, a mix of open/in-progress/completed.
+  const SAMPLE_TASKS = [
+    "Call to confirm next appointment",
+    "Follow up on outstanding lab work",
+    "Send referral letter to specialist",
+    "Confirm insurance pre-authorization",
+    "Check in after treatment",
+  ];
+  const TASK_STATUSES = [TaskStatus.OPEN, TaskStatus.OPEN, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED];
+  let taskCount = 0;
+  for (const patient of patients) {
+    if (Math.random() >= 0.25) continue;
+    const status = pick(TASK_STATUSES);
+    await prisma.patientTask.create({
+      data: {
+        practiceId: practice.id,
+        patientId: patient.id,
+        title: pick(SAMPLE_TASKS),
+        status,
+        assignedToUserId: Math.random() < 0.6 ? adminUser.id : null,
+        dueAt: new Date(Date.now() + randInt(-5, 14) * 86400000),
+        createdById: adminUser.id,
+        completedAt: status === TaskStatus.COMPLETED ? new Date() : null,
+      },
+    });
+    taskCount++;
+  }
+
+  // Flags for ~15% of patients.
+  let flagCount = 0;
+  for (const patient of patients) {
+    if (Math.random() >= 0.15) continue;
+    await prisma.patientFlag.create({
+      data: {
+        patientId: patient.id,
+        flagKey: pick([...PATIENT_FLAG_KEYS]),
+        createdById: adminUser.id,
+      },
+    });
+    flagCount++;
+  }
+
   console.log("Seed complete:");
   console.log(`  Practice: ${practice.name}`);
   console.log(`  Practitioners: ${practitioners.length}`);
   console.log(`  Patients: ${patients.length}`);
   const apptCount = await prisma.appointment.count();
   console.log(`  Appointments: ${apptCount}`);
+  console.log(`  Family relationships: ${familyClusters * 2}`);
+  console.log(`  Medical histories: ${medicalHistoryCount} (alerts raised: ${alertCount})`);
+  console.log(`  Clinical notes: ${clinicalNoteCount}`);
+  console.log(`  Admin notes: ${adminNoteCount}`);
+  console.log(`  Documents: ${documentCount}`);
+  console.log(`  Tasks: ${taskCount}`);
+  console.log(`  Flags: ${flagCount}`);
   console.log(`  Demo login password for all seeded users: ${DEV_PASSWORD}`);
 }
 

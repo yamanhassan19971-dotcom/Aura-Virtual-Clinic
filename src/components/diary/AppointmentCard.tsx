@@ -3,7 +3,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import { useLocale, useTranslations } from "next-intl";
 import type { AppointmentWithRelations } from "@/lib/services/appointment-service";
-import { formatTime } from "@/lib/time";
+import { Link } from "@/i18n/navigation";
+import { formatTime, toDateParam } from "@/lib/time";
 import { STATUS_COLOR_VAR, STATUS_GLYPH } from "@/components/diary/status-meta";
 
 export function AppointmentCard({
@@ -89,6 +90,19 @@ export function AppointmentCard({
           {!isTiny && <span>{t(appointment.status)}</span>}
         </span>
       </button>
+
+      {!isTiny && (
+        <Link
+          href={`/patients/${appointment.patientId}/overview?fromAppointment=${appointment.id}&returnDate=${toDateParam(appointment.startTime)}`}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          title="Open Patient"
+          data-testid="appointment-open-patient"
+          className="absolute end-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded text-[10px] text-gray-400 opacity-0 hover:bg-gray-100 hover:text-[var(--color-blue)] group-hover:opacity-100"
+        >
+          ↗
+        </Link>
+      )}
 
       {!disabled && (
         <div

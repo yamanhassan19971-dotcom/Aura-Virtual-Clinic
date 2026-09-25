@@ -23,6 +23,7 @@ export function BookingModal({
   mode,
   draft,
   appointment,
+  initialPatient,
   practitioners,
   rooms,
   appointmentTypes,
@@ -34,6 +35,8 @@ export function BookingModal({
   mode: "create" | "edit";
   draft?: BookingDraft;
   appointment?: AppointmentWithRelations;
+  /** Pre-selects the patient (skipping search) — used when booking is launched from that patient's own record. */
+  initialPatient?: Patient;
   practitioners: Practitioner[];
   rooms: Room[];
   appointmentTypes: AppointmentType[];
@@ -45,7 +48,9 @@ export function BookingModal({
   const t = useTranslations("booking");
   const initialStart = appointment?.startTime ?? draft?.startTime ?? new Date();
 
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(appointment?.patient ?? null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
+    appointment?.patient ?? initialPatient ?? null
+  );
   const [practitionerId, setPractitionerId] = useState(appointment?.practitionerId ?? draft?.practitionerId ?? practitioners[0]?.id ?? "");
   const [roomId, setRoomId] = useState(appointment?.roomId ?? draft?.roomId ?? rooms[0]?.id ?? "");
   const [appointmentTypeId, setAppointmentTypeId] = useState(appointment?.appointmentTypeId ?? appointmentTypes[0]?.id ?? "");

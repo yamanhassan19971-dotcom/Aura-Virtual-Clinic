@@ -3,6 +3,17 @@ import type { Actor } from "@/lib/services/actor";
 
 export async function resetDb() {
   await prisma.auditLog.deleteMany();
+  await prisma.clinicalNoteAmendment.deleteMany();
+  await prisma.clinicalNote.deleteMany();
+  await prisma.clinicalNoteTemplate.deleteMany();
+  await prisma.patientTask.deleteMany();
+  await prisma.patientDocument.deleteMany();
+  await prisma.patientNote.deleteMany();
+  await prisma.medicalAlert.deleteMany();
+  await prisma.medicalHistoryAnswer.deleteMany();
+  await prisma.medicalHistory.deleteMany();
+  await prisma.patientFamilyRelationship.deleteMany();
+  await prisma.patientFlag.deleteMany();
   await prisma.appointmentStatusHistory.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.workingHours.deleteMany();
@@ -79,11 +90,21 @@ export async function seedFixture() {
       practitioner: { connect: { id: drA.id } },
     },
   });
+  const managerUser = await prisma.user.create({
+    data: {
+      practiceId: practice.id,
+      email: "manager@test.local",
+      name: "Manager",
+      role: "PRACTICE_MANAGER",
+      passwordHash: "unused",
+    },
+  });
 
   const actors: Record<string, Actor> = {
     admin: { id: adminUser.id, role: "ADMIN", practiceId: practice.id, practitionerId: null },
     reception: { id: receptionUser.id, role: "RECEPTIONIST", practiceId: practice.id, practitionerId: null },
     clinicianA: { id: clinicianUser.id, role: "CLINICIAN", practiceId: practice.id, practitionerId: drA.id },
+    manager: { id: managerUser.id, role: "PRACTICE_MANAGER", practiceId: practice.id, practitionerId: null },
   };
 
   return { practice, roomA, roomB, drA, drB, examType, patient1, patient2, actors };

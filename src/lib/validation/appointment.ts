@@ -64,11 +64,6 @@ export const ftaAppointmentSchema = z.object({
 });
 export type FtaAppointmentInput = z.infer<typeof ftaAppointmentSchema>;
 
-export const newPatientSchema = z.object({
-  firstName: z.string().min(1).max(100),
-  lastName: z.string().min(1).max(100),
-  dateOfBirth: z.coerce.date(),
-  phone: z.string().max(40).optional().nullable(),
-  email: z.string().email().max(200).optional().nullable().or(z.literal("")),
-});
-export type NewPatientInput = z.infer<typeof newPatientSchema>;
+// newPatientSchema moved to @/lib/validation/patient (Phase 2 grew a full
+// patient-details schema there too; keeping all patient validation in one
+// file).

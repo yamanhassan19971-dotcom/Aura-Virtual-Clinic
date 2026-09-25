@@ -39,6 +39,9 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 
+# uploaded patient documents (private, never committed)
+/storage/
+
 # vercel
 .vercel
 

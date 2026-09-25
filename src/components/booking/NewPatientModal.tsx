@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import type { Patient } from "@prisma/client";
 import { Modal } from "@/components/ui/Modal";
 import { createPatientAction } from "@/lib/actions/appointment-actions";
+import { DuplicatePatientDialog } from "@/components/booking/DuplicatePatientDialog";
+import type { DuplicatePatientInfo } from "@/lib/actions/action-result";
 
 export function NewPatientModal({
   prefillName,
@@ -25,9 +27,9 @@ export function NewPatientModal({
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicatePatientInfo[] | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit(overrideDuplicateCheck: boolean) {
     setSubmitting(true);
     setError(null);
     const result = await createPatientAction({
@@ -36,16 +38,26 @@ export function NewPatientModal({
       dateOfBirth: dob,
       phone: phone || null,
       email: email || null,
+      overrideDuplicateCheck,
     });
     setSubmitting(false);
     if (result.ok) {
+      setDuplicates(null);
       onCreated(result.data);
+    } else if (result.kind === "DUPLICATE_PATIENT" && result.duplicates) {
+      setDuplicates(result.duplicates);
     } else {
       setError(result.message);
     }
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submit(false);
+  }
+
   return (
+    <>
     <Modal title={t("title")} onClose={onClose} width="sm">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">
@@ -116,5 +128,15 @@ export function NewPatientModal({
         </div>
       </form>
     </Modal>
+    {duplicates && (
+      <DuplicatePatientDialog
+        duplicates={duplicates}
+        canCreateAnyway
+        submitting={submitting}
+        onClose={() => setDuplicates(null)}
+        onCreateAnyway={() => submit(true)}
+      />
+    )}
+    </>
   );
 }

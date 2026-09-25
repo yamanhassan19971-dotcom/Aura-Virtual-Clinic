@@ -52,6 +52,14 @@ export async function dragCardBy(page: Page, card: ReturnType<typeof appointment
   await page.mouse.up();
 }
 
+/** Opens a patient's record via the /patients search page and lands on its Overview tab. */
+export async function openPatientRecord(page: Page, patientName: string) {
+  await page.goto("/en/patients");
+  await page.getByPlaceholder("Search by name, phone, patient ID or DOB").fill(patientName);
+  await page.getByRole("link", { name: patientName, exact: false }).first().click();
+  await page.waitForURL("**/patients/**/overview**");
+}
+
 /** Drags an appointment's resize handle down by `deltaY` pixels to grow its duration. */
 export async function resizeCardBy(page: Page, card: ReturnType<typeof appointmentCard>, deltaY: number) {
   const handle = card.locator('[data-testid="appointment-resize-handle"]');

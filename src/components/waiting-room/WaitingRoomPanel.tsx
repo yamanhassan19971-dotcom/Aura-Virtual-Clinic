@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AppointmentWithRelations } from "@/lib/services/appointment-service";
-import { formatTime, minutesBetween } from "@/lib/time";
+import { Link } from "@/i18n/navigation";
+import { formatTime, minutesBetween, toDateParam } from "@/lib/time";
 
 export function WaitingRoomPanel({
   appointments,
@@ -34,7 +35,7 @@ export function WaitingRoomPanel({
       ) : (
         <ul className="flex flex-col gap-2">
           {sorted.map((appt) => (
-            <li key={appt.id}>
+            <li key={appt.id} className="relative">
               <button
                 type="button"
                 onClick={() => onOpen(appt.id)}
@@ -49,6 +50,13 @@ export function WaitingRoomPanel({
                   {appt.arrivedAt && ` · ${t("waitingMinutes", { minutes: minutesBetween(appt.arrivedAt, new Date()) })}`}
                 </span>
               </button>
+              <Link
+                href={`/patients/${appt.patientId}/overview?fromAppointment=${appt.id}&returnDate=${toDateParam(appt.startTime)}`}
+                title="Open Patient"
+                className="absolute end-2 top-2 text-xs font-medium text-[var(--color-status-arrived)] opacity-70 hover:underline hover:opacity-100"
+              >
+                ↗
+              </Link>
             </li>
           ))}
         </ul>

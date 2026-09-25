@@ -5,8 +5,9 @@ import { useLocale, useTranslations } from "next-intl";
 import type { AppointmentStatus, AppointmentStatusHistory } from "@prisma/client";
 import type { AppointmentWithRelations } from "@/lib/services/appointment-service";
 import { decodeReason } from "@/lib/services/appointment-service";
-import { formatTime, formatLongDate } from "@/lib/time";
+import { formatTime, formatLongDate, toDateParam } from "@/lib/time";
 import { StatusBadge } from "@/components/diary/StatusBadge";
+import { Link } from "@/i18n/navigation";
 import { getStatusHistoryAction } from "@/lib/actions/query-actions";
 
 type HistoryRow = AppointmentStatusHistory & { changedBy: { name: string } | null };
@@ -127,7 +128,15 @@ export function AppointmentDetailsPanel({
         </section>
 
         <section className="mb-4">
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{t("patientInfo")}</h3>
+          <div className="mb-1 flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">{t("patientInfo")}</h3>
+            <Link
+              href={`/patients/${appointment.patientId}/overview?fromAppointment=${appointment.id}&returnDate=${toDateParam(appointment.startTime)}`}
+              className="text-xs font-medium text-[var(--color-blue)] hover:underline"
+            >
+              {t("openPatient")}
+            </Link>
+          </div>
           <p className="text-sm text-[var(--color-text)]">
             {appointment.patient.firstName} {appointment.patient.lastName} ({appointment.patient.patientCode})
           </p>

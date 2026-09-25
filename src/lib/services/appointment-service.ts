@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { assertCan } from "@/lib/permissions";
 import type { Actor } from "@/lib/services/actor";
 import { ConflictError, InvalidTransitionError, NotFoundError } from "@/lib/services/errors";
+import { writeAudit } from "@/lib/services/audit";
+import { encodeReason } from "@/lib/services/codec";
 import {
   cancelAppointmentSchema,
   changeStatusSchema,
@@ -39,16 +41,10 @@ function startOfDay(date: Date): Date {
 // Reason fields store "<CODE>::<free text notes>" so the UI can localize the
 // code (via the status/cancelDialog/ftaDialog message namespaces) while
 // still keeping the receptionist's free-text note, without adding a column
-// that section 37 of the spec doesn't define.
-export function encodeReason(code: string, notes?: string | null): string {
-  return notes && notes.trim().length > 0 ? `${code}::${notes.trim()}` : code;
-}
-export function decodeReason(value: string | null): { code: string; notes: string | null } {
-  if (!value) return { code: "", notes: null };
-  const idx = value.indexOf("::");
-  if (idx === -1) return { code: value, notes: null };
-  return { code: value.slice(0, idx), notes: value.slice(idx + 2) };
-}
+// that section 37 of the spec doesn't define. Re-exported here for existing
+// importers; the encoding itself now lives in codec.ts since Phase 2's
+// medical alerts reuse the same convention.
+export { decodeReason } from "@/lib/services/codec";
 
 function assertOwnAppointmentIfClinician(actor: Actor, appointment: Pick<Appointment, "practitionerId">) {
   if (actor.role === "CLINICIAN" && appointment.practitionerId !== actor.practitionerId) {
@@ -106,26 +102,11 @@ async function writeHistory(
   });
 }
 
-async function writeAudit(
+function writeAppointmentAudit(
   tx: Prisma.TransactionClient,
-  params: {
-    userId: string;
-    action: string;
-    recordId: string;
-    previousValue: unknown;
-    newValue: unknown;
-  }
+  params: { userId: string; action: string; recordId: string; previousValue: unknown; newValue: unknown }
 ) {
-  await tx.auditLog.create({
-    data: {
-      userId: params.userId,
-      action: params.action,
-      recordType: "Appointment",
-      recordId: params.recordId,
-      previousValue: params.previousValue === null ? undefined : (params.previousValue as Prisma.InputJsonValue),
-      newValue: params.newValue === null ? undefined : (params.newValue as Prisma.InputJsonValue),
-    },
-  });
+  return writeAudit(tx, { ...params, recordType: "Appointment" });
 }
 
 async function assertReferencesBelongToPractice(
@@ -208,7 +189,7 @@ export async function createAppointment(actor: Actor, rawInput: unknown): Promis
       newStatus: appt.status,
       changedById: actor.id,
     });
-    await writeAudit(tx, {
+    await writeAppointmentAudit(tx, {
       userId: actor.id,
       action: "appointment.created",
       recordId: appt.id,
@@ -306,7 +287,7 @@ export async function updateAppointment(actor: Actor, rawInput: unknown): Promis
         ? "appointment.moved"
         : "appointment.edited";
 
-    await writeAudit(tx, {
+    await writeAppointmentAudit(tx, {
       userId: actor.id,
       action,
       recordId: updated.id,
@@ -349,7 +330,7 @@ export async function changeStatus(actor: Actor, rawInput: unknown): Promise<App
       newStatus: input.status,
       changedById: actor.id,
     });
-    await writeAudit(tx, {
+    await writeAppointmentAudit(tx, {
       userId: actor.id,
       action: "appointment.statusChanged",
       recordId: existing.id,
@@ -391,7 +372,7 @@ export async function cancelAppointment(actor: Actor, rawInput: unknown): Promis
       changedById: actor.id,
       reason: cancellationReason,
     });
-    await writeAudit(tx, {
+    await writeAppointmentAudit(tx, {
       userId: actor.id,
       action: "appointment.cancelled",
       recordId: existing.id,
@@ -433,7 +414,7 @@ export async function markFta(actor: Actor, rawInput: unknown): Promise<Appointm
       changedById: actor.id,
       reason: ftaReason,
     });
-    await writeAudit(tx, {
+    await writeAppointmentAudit(tx, {
       userId: actor.id,
       action: "appointment.fta",
       recordId: existing.id,

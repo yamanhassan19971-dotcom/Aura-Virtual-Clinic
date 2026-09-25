@@ -9,6 +9,22 @@ const prisma = new PrismaClient();
 // so tests never depend on fragile pre-seeded appointment IDs.
 async function main() {
   await prisma.auditLog.deleteMany();
+
+  // Phase 2 tables reference Patient (and some optionally reference
+  // Appointment) — clear them first, children before parents, or the
+  // Patient/Appointment deletes below hit a foreign key violation.
+  await prisma.clinicalNoteAmendment.deleteMany();
+  await prisma.clinicalNote.deleteMany();
+  await prisma.clinicalNoteTemplate.deleteMany();
+  await prisma.medicalHistoryAnswer.deleteMany();
+  await prisma.medicalHistory.deleteMany();
+  await prisma.medicalAlert.deleteMany();
+  await prisma.patientDocument.deleteMany();
+  await prisma.patientTask.deleteMany();
+  await prisma.patientNote.deleteMany();
+  await prisma.patientFlag.deleteMany();
+  await prisma.patientFamilyRelationship.deleteMany();
+
   await prisma.appointmentStatusHistory.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.workingHours.deleteMany();

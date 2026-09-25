@@ -24,6 +24,69 @@ enum AppointmentStatus {
   FTA
 }
 
+// Phase 2 enums ---------------------------------------------------------
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum PatientContactMethod {
+  PHONE
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+// A single row describes "patient's relation TO relatedPatient" (e.g.
+// patient=Ahmed, relatedPatient=Omar, type=CHILD means "Omar is Ahmed's
+// child"). The service layer computes the reciprocal label when rendering
+// from the other patient's side, so there is exactly one row per link.
+enum FamilyRelationType {
+  SPOUSE
+  PARENT
+  CHILD
+  SIBLING
+  GUARDIAN
+  OTHER
+}
+
+enum MedicalHistoryStatus {
+  CURRENT
+  PREVIOUS
+}
+
+enum MedicalAnswerValue {
+  YES
+  NO
+  UNKNOWN
+  NOT_APPLICABLE
+}
+
+enum ClinicalNoteStatus {
+  DRAFT
+  SIGNED
+}
+
+enum DocumentCategory {
+  RADIOGRAPH
+  CLINICAL_PHOTOGRAPH
+  REFERRAL
+  MEDICAL_REPORT
+  CONSENT
+  LAB
+  CORRESPONDENCE
+  OTHER
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 // A physical clinic location. Every clinical/scheduling record hangs off a
 // practice so Phase 2+ can add more locations without a schema change.
 model Practice {
@@ -34,13 +97,16 @@ model Practice {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  rooms            Room[]
-  practitioners    Practitioner[]
-  patients         Patient[]
-  users            User[]
-  appointmentTypes AppointmentType[]
-  appointments     Appointment[]
-  workingHours     WorkingHours[]
+  rooms                 Room[]
+  practitioners         Practitioner[]
+  patients              Patient[]
+  users                 User[]
+  appointmentTypes      AppointmentType[]
+  appointments          Appointment[]
+  workingHours          WorkingHours[]
+  clinicalNoteTemplates ClinicalNoteTemplate[]
+  clinicalNotes         ClinicalNote[]
+  patientTasks          PatientTask[]
 
   @@map("practices")
 }
@@ -54,8 +120,8 @@ model Room {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  practice             Practice       @relation(fields: [practiceId], references: [id])
-  appointments         Appointment[]
+  practice                Practice       @relation(fields: [practiceId], references: [id])
+  appointments            Appointment[]
   defaultForPractitioners Practitioner[] @relation("DefaultRoom")
 
   @@index([practiceId])
@@ -77,11 +143,28 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  practice           Practice                   @relation(fields: [practiceId], references: [id])
-  practitioner       Practitioner?
-  statusChangesMade  AppointmentStatusHistory[]
-  auditLogEntries    AuditLog[]
+  practice            Practice                   @relation(fields: [practiceId], references: [id])
+  practitioner        Practitioner?
+  statusChangesMade   AppointmentStatusHistory[]
+  auditLogEntries     AuditLog[]
   createdAppointments Appointment[]
+
+  // Phase 2 back-relations
+  patientsCreated        Patient[]                   @relation("PatientCreatedBy")
+  patientsUpdated        Patient[]                   @relation("PatientUpdatedBy")
+  familyLinksCreated     PatientFamilyRelationship[]
+  medicalHistoriesTaken  MedicalHistory[]
+  alertsCreated          MedicalAlert[]              @relation("AlertCreatedBy")
+  alertsResolved         MedicalAlert[]              @relation("AlertResolvedBy")
+  noteTemplatesOwned     ClinicalNoteTemplate[]
+  clinicalNotesCreated   ClinicalNote[]              @relation("NoteCreatedBy")
+  clinicalNotesSigned    ClinicalNote[]              @relation("NoteSignedBy")
+  clinicalNoteAmendments ClinicalNoteAmendment[]
+  patientNotesCreated    PatientNote[]
+  documentsUploaded      PatientDocument[]
+  tasksAssigned          PatientTask[]               @relation("TaskAssignedTo")
+  tasksCreated           PatientTask[]               @relation("TaskCreatedBy")
+  flagsCreated           PatientFlag[]
 
   @@index([practiceId])
   @@map("users")
@@ -101,11 +184,13 @@ model Practitioner {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  practice     Practice       @relation(fields: [practiceId], references: [id])
-  user         User?          @relation(fields: [userId], references: [id])
-  defaultRoom  Room?          @relation("DefaultRoom", fields: [defaultRoomId], references: [id])
-  appointments Appointment[]
-  workingHours WorkingHours[]
+  practice            Practice       @relation(fields: [practiceId], references: [id])
+  user                User?          @relation(fields: [userId], references: [id])
+  defaultRoom         Room?          @relation("DefaultRoom", fields: [defaultRoomId], references: [id])
+  appointments        Appointment[]
+  workingHours        WorkingHours[]
+  preferredByPatients Patient[]      @relation("PreferredPractitioner")
+  clinicalNotes       ClinicalNote[]
 
   @@index([practiceId])
   @@map("practitioners")
@@ -130,25 +215,299 @@ model WorkingHours {
 }
 
 model Patient {
-  id          String   @id @default(cuid())
-  practiceId  String   @map("practice_id")
-  patientCode String   @unique @map("patient_code")
-  firstName   String   @map("first_name")
-  lastName    String   @map("last_name")
-  dateOfBirth DateTime @map("date_of_birth") @db.Date
-  phone       String?
+  id          String        @id @default(cuid())
+  practiceId  String        @map("practice_id")
+  patientCode String        @unique @map("patient_code")
+  firstName   String        @map("first_name")
+  lastName    String        @map("last_name")
+  dateOfBirth DateTime      @map("date_of_birth") @db.Date
+  phone       String? // mobile phone — the original Phase 1 field
   email       String?
-  notes       String?
+  notes       String? // legacy free-text field, superseded by PatientNote
+  status      PatientStatus @default(ACTIVE)
+
+  // Personal details
+  middleName        String? @map("middle_name")
+  preferredName     String? @map("preferred_name")
+  title             String?
+  gender            String?
+  preferredLanguage String? @map("preferred_language")
+
+  // Contact details
+  homePhone    String? @map("home_phone")
+  workPhone    String? @map("work_phone")
+  addressLine1 String? @map("address_line1")
+  addressLine2 String? @map("address_line2")
+  city         String?
+  country      String?
+  postalCode   String? @map("postal_code")
+
+  // Emergency contact
+  emergencyContactName         String? @map("emergency_contact_name")
+  emergencyContactRelationship String? @map("emergency_contact_relationship")
+  emergencyContactPhone        String? @map("emergency_contact_phone")
+  emergencyContactNotes        String? @map("emergency_contact_notes")
+
+  // Practice preferences
+  preferredPractitionerId String?               @map("preferred_practitioner_id")
+  acquisitionSource       String?               @map("acquisition_source")
+  preferredContactMethod  PatientContactMethod? @map("preferred_contact_method")
+  recallPreference        String?               @map("recall_preference")
+
+  createdById String? @map("created_by")
+  updatedById String? @map("updated_by")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  practice     Practice      @relation(fields: [practiceId], references: [id])
-  appointments Appointment[]
+  practice              Practice      @relation(fields: [practiceId], references: [id])
+  preferredPractitioner Practitioner? @relation("PreferredPractitioner", fields: [preferredPractitionerId], references: [id])
+  createdBy             User?         @relation("PatientCreatedBy", fields: [createdById], references: [id])
+  updatedBy             User?         @relation("PatientUpdatedBy", fields: [updatedById], references: [id])
+  appointments          Appointment[]
+
+  familyLinksFrom  PatientFamilyRelationship[] @relation("FamilyFrom")
+  familyLinksTo    PatientFamilyRelationship[] @relation("FamilyTo")
+  medicalHistories MedicalHistory[]
+  medicalAlerts    MedicalAlert[]
+  clinicalNotes    ClinicalNote[]
+  patientNotes     PatientNote[]
+  documents        PatientDocument[]
+  tasks            PatientTask[]
+  flags            PatientFlag[]
 
   @@index([practiceId])
   @@index([lastName, firstName])
   @@map("patients")
+}
+
+model PatientFamilyRelationship {
+  id               String             @id @default(cuid())
+  patientId        String             @map("patient_id")
+  relatedPatientId String             @map("related_patient_id")
+  relationType     FamilyRelationType @map("relation_type")
+  createdById      String?            @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  patient        Patient @relation("FamilyFrom", fields: [patientId], references: [id])
+  relatedPatient Patient @relation("FamilyTo", fields: [relatedPatientId], references: [id])
+  createdBy      User?   @relation(fields: [createdById], references: [id])
+
+  @@unique([patientId, relatedPatientId])
+  @@index([relatedPatientId])
+  @@map("patient_family_relationships")
+}
+
+// Every submission creates a NEW row; the previous CURRENT row is flipped to
+// PREVIOUS in the same transaction. Never update answers on an existing
+// CURRENT history in place — that would silently rewrite clinical history.
+model MedicalHistory {
+  id            String               @id @default(cuid())
+  patientId     String               @map("patient_id")
+  status        MedicalHistoryStatus @default(CURRENT)
+  completedById String?              @map("completed_by")
+  completedAt   DateTime             @default(now()) @map("completed_at")
+  notes         String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  patient     Patient                @relation(fields: [patientId], references: [id])
+  completedBy User?                  @relation(fields: [completedById], references: [id])
+  answers     MedicalHistoryAnswer[]
+  alerts      MedicalAlert[]
+
+  @@index([patientId, status])
+  @@map("medical_histories")
+}
+
+// category/questionKey come from a code-defined catalog (see
+// lib/medical/question-catalog.ts) rather than a database table, so the
+// question set can grow without a migration; the catalog key is what's
+// stored, making the row set effectively configurable.
+model MedicalHistoryAnswer {
+  id               String              @id @default(cuid())
+  medicalHistoryId String              @map("medical_history_id")
+  category         String
+  questionKey      String              @map("question_key")
+  answer           MedicalAnswerValue?
+  freeText         String?             @map("free_text")
+
+  medicalHistory MedicalHistory @relation(fields: [medicalHistoryId], references: [id])
+
+  @@index([medicalHistoryId])
+  @@map("medical_history_answers")
+}
+
+// Never hard-deleted — "removing" an alert sets active=false and stamps who
+// resolved it, so the clinical record stays traceable.
+model MedicalAlert {
+  id               String    @id @default(cuid())
+  patientId        String    @map("patient_id")
+  medicalHistoryId String?   @map("medical_history_id")
+  label            String
+  active           Boolean   @default(true)
+  createdById      String?   @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  resolvedAt       DateTime? @map("resolved_at")
+  resolvedById     String?   @map("resolved_by")
+
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  medicalHistory MedicalHistory? @relation(fields: [medicalHistoryId], references: [id])
+  createdBy      User?           @relation("AlertCreatedBy", fields: [createdById], references: [id])
+  resolvedBy     User?           @relation("AlertResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([patientId, active])
+  @@map("medical_alerts")
+}
+
+// ownerUserId = null -> practice-wide template; set -> personal template.
+model ClinicalNoteTemplate {
+  id          String  @id @default(cuid())
+  practiceId  String  @map("practice_id")
+  ownerUserId String? @map("owner_user_id")
+  title       String
+  body        String
+  active      Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  practice  Practice @relation(fields: [practiceId], references: [id])
+  ownerUser User?    @relation(fields: [ownerUserId], references: [id])
+
+  @@index([practiceId])
+  @@map("clinical_note_templates")
+}
+
+// A signed note's `content` is permanently frozen; corrections after signing
+// go through ClinicalNoteAmendment, never an edit to `content` itself.
+model ClinicalNote {
+  id             String             @id @default(cuid())
+  practiceId     String             @map("practice_id")
+  patientId      String             @map("patient_id")
+  appointmentId  String?            @map("appointment_id")
+  practitionerId String             @map("practitioner_id")
+  status         ClinicalNoteStatus @default(DRAFT)
+  content        String
+  signedAt       DateTime?          @map("signed_at")
+  signedById     String?            @map("signed_by")
+  createdById    String?            @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice     Practice                @relation(fields: [practiceId], references: [id])
+  patient      Patient                 @relation(fields: [patientId], references: [id])
+  appointment  Appointment?            @relation(fields: [appointmentId], references: [id])
+  practitioner Practitioner            @relation(fields: [practitionerId], references: [id])
+  signedBy     User?                   @relation("NoteSignedBy", fields: [signedById], references: [id])
+  createdBy    User?                   @relation("NoteCreatedBy", fields: [createdById], references: [id])
+  amendments   ClinicalNoteAmendment[]
+
+  @@index([patientId])
+  @@index([appointmentId])
+  @@map("clinical_notes")
+}
+
+model ClinicalNoteAmendment {
+  id             String  @id @default(cuid())
+  clinicalNoteId String  @map("clinical_note_id")
+  content        String
+  createdById    String? @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  clinicalNote ClinicalNote @relation(fields: [clinicalNoteId], references: [id])
+  createdBy    User?        @relation(fields: [createdById], references: [id])
+
+  @@index([clinicalNoteId])
+  @@map("clinical_note_amendments")
+}
+
+// Administrative/non-clinical notes — deliberately a separate model from
+// ClinicalNote so the two are never rendered or queried together.
+model PatientNote {
+  id          String  @id @default(cuid())
+  patientId   String  @map("patient_id")
+  content     String
+  createdById String? @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  patient   Patient @relation(fields: [patientId], references: [id])
+  createdBy User?   @relation(fields: [createdById], references: [id])
+
+  @@index([patientId])
+  @@map("patient_notes")
+}
+
+// Soft-deleted only (deletedAt) — a healthcare document is never truly
+// removed, just hidden from normal views. storageKey is a path inside the
+// private, non-public-served upload root (see lib/documents/storage.ts).
+model PatientDocument {
+  id           String           @id @default(cuid())
+  patientId    String           @map("patient_id")
+  filename     String
+  storageKey   String           @map("storage_key")
+  mimeType     String           @map("mime_type")
+  sizeBytes    Int              @map("size_bytes")
+  category     DocumentCategory @default(OTHER)
+  description  String?
+  uploadedById String?          @map("uploaded_by")
+
+  uploadedAt DateTime  @default(now()) @map("uploaded_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  patient    Patient @relation(fields: [patientId], references: [id])
+  uploadedBy User?   @relation(fields: [uploadedById], references: [id])
+
+  @@index([patientId])
+  @@map("patient_documents")
+}
+
+model PatientTask {
+  id               String     @id @default(cuid())
+  practiceId       String     @map("practice_id")
+  patientId        String     @map("patient_id")
+  appointmentId    String?    @map("appointment_id")
+  title            String
+  status           TaskStatus @default(OPEN)
+  assignedToUserId String?    @map("assigned_to_user_id")
+  dueAt            DateTime?  @map("due_at")
+  createdById      String?    @map("created_by")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  practice    Practice     @relation(fields: [practiceId], references: [id])
+  patient     Patient      @relation(fields: [patientId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  assignedTo  User?        @relation("TaskAssignedTo", fields: [assignedToUserId], references: [id])
+  createdBy   User?        @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  @@index([patientId])
+  @@index([practiceId, status])
+  @@map("patient_tasks")
+}
+
+// flagKey comes from a code-defined catalog (lib/patients/flag-catalog.ts),
+// same configurability approach as medical question keys above.
+model PatientFlag {
+  id          String  @id @default(cuid())
+  patientId   String  @map("patient_id")
+  flagKey     String  @map("flag_key")
+  notes       String?
+  active      Boolean @default(true)
+  createdById String? @map("created_by")
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  patient   Patient @relation(fields: [patientId], references: [id])
+  createdBy User?   @relation(fields: [createdById], references: [id])
+
+  @@index([patientId, active])
+  @@map("patient_flags")
 }
 
 model AppointmentType {
@@ -209,6 +568,8 @@ model Appointment {
   appointmentType AppointmentType            @relation(fields: [appointmentTypeId], references: [id])
   createdBy       User?                      @relation(fields: [createdById], references: [id])
   statusHistory   AppointmentStatusHistory[]
+  clinicalNotes   ClinicalNote[]
+  tasks           PatientTask[]
 
   @@index([practitionerId, date])
   @@index([practiceId, date])
