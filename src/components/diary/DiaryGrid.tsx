@@ -64,7 +64,17 @@ export function DiaryGrid({
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    // A stable, static `id` is required here — without it, dnd-kit falls
+    // back to a module-level mutable counter to generate the
+    // aria-describedby id used by its screen-reader announcements. That
+    // counter's value depends on how many other DndContext/useDraggable
+    // instances have rendered before it in the same process, which differs
+    // between the server's render pass and the client's fresh module
+    // instantiation, causing a hydration mismatch
+    // (e.g. server "DndDescribedBy-3" vs client "DndDescribedBy-0"). This
+    // `id` prop is dnd-kit's own documented fix for SSR — see
+    // https://docs.dndkit.com/api-documentation/context-provider#server-side-rendering.
+    <DndContext id="diary-dnd-context" sensors={sensors} onDragEnd={handleDragEnd}>
       <div ref={scrollContainerRef} className="relative flex-1 overflow-auto">
         <div className="flex">
           <TimeAxis timeScale={timeScale} />
