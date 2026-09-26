@@ -20,6 +20,16 @@ describe("medical history service", () => {
     ).rejects.toBeInstanceOf(PermissionError);
   });
 
+  it("blocks a practice manager from submitting medical history — can view clinical data, not author it", async () => {
+    const { actors, patient1 } = await fixture();
+    await expect(
+      submitMedicalHistory(actors.manager, {
+        patientId: patient1.id,
+        answers: [{ questionKey: "diabetes", answer: "NO" }],
+      })
+    ).rejects.toBeInstanceOf(PermissionError);
+  });
+
   it("versions medical history — a new submission never overwrites the previous one", async () => {
     const { actors, patient1 } = await fixture();
 

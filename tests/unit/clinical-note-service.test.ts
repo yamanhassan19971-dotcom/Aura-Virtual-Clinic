@@ -4,6 +4,7 @@ import { resetDb, seedFixture } from "./fixtures";
 import {
   addNoteAmendment,
   createClinicalNote,
+  createNoteTemplate,
   signClinicalNote,
   updateClinicalNoteDraft,
 } from "@/lib/services/clinical-note-service";
@@ -20,6 +21,13 @@ describe("clinical note service", () => {
     const { actors, patient1, drA } = await fixture();
     await expect(
       createClinicalNote(actors.reception, { patientId: patient1.id, practitionerId: drA.id, content: "..." })
+    ).rejects.toBeInstanceOf(PermissionError);
+  });
+
+  it("blocks a practice manager from creating clinical notes — can view clinical data, not author it", async () => {
+    const { actors, patient1, drA } = await fixture();
+    await expect(
+      createClinicalNote(actors.manager, { patientId: patient1.id, practitionerId: drA.id, content: "..." })
     ).rejects.toBeInstanceOf(PermissionError);
   });
 
@@ -87,5 +95,20 @@ describe("clinical note service", () => {
     await expect(addNoteAmendment(actors.clinicianA, { noteId: draft.id, content: "x" })).rejects.toBeInstanceOf(
       RecordLockedError
     );
+  });
+
+  it("creates a note template and records it in the audit log", async () => {
+    const { actors } = await fixture();
+    const template = await createNoteTemplate(actors.clinicianA, {
+      title: "Routine Exam",
+      body: "No new findings.",
+      personal: true,
+    });
+    expect(template.ownerUserId).toBe(actors.clinicianA.id);
+
+    const audit = await prisma.auditLog.findMany({
+      where: { recordId: template.id, action: "patient.noteTemplateCreated" },
+    });
+    expect(audit).toHaveLength(1);
   });
 });

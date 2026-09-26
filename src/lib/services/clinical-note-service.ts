@@ -131,13 +131,25 @@ export async function createNoteTemplate(actor: Actor, rawInput: unknown) {
   const input = createNoteTemplateSchema.parse(rawInput);
   assertCan(actor.role, "patients.manageNoteTemplates");
 
-  const template = await prisma.clinicalNoteTemplate.create({
-    data: {
-      practiceId: actor.practiceId,
-      ownerUserId: input.personal ? actor.id : null,
-      title: input.title,
-      body: input.body,
-    },
+  return prisma.$transaction(async (tx) => {
+    const template = await tx.clinicalNoteTemplate.create({
+      data: {
+        practiceId: actor.practiceId,
+        ownerUserId: input.personal ? actor.id : null,
+        title: input.title,
+        body: input.body,
+      },
+    });
+
+    await writeAudit(tx, {
+      userId: actor.id,
+      action: "patient.noteTemplateCreated",
+      recordType: "ClinicalNoteTemplate",
+      recordId: template.id,
+      previousValue: null,
+      newValue: serialize(template),
+    });
+
+    return template;
   });
-  return template;
 }

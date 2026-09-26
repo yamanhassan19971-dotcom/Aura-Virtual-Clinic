@@ -56,23 +56,28 @@ function sanitizeFilename(filename: string): string {
   return filename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-150);
 }
 
+// STORAGE_ROOT is a runtime-computed, per-practice/per-patient path outside
+// `public/` — it can never be resolved statically, so the reads/writes below
+// are intentionally exempted from Next's build-time file tracer (without
+// this, it would bundle the entire project into the server output, per
+// https://nextjs.org/docs/messages/dynamic-fs-tracing).
 export async function saveDocumentFile(params: {
   practiceId: string;
   patientId: string;
   filename: string;
   buffer: Buffer;
 }): Promise<string> {
-  const dir = path.join(STORAGE_ROOT, params.practiceId, params.patientId);
+  const dir = path.join(/* turbopackIgnore: true */ STORAGE_ROOT, params.practiceId, params.patientId);
   await mkdir(dir, { recursive: true });
   const storageKey = path.join(params.practiceId, params.patientId, `${randomUUID()}-${sanitizeFilename(params.filename)}`);
-  await writeFile(path.join(STORAGE_ROOT, storageKey), params.buffer);
+  await writeFile(path.join(/* turbopackIgnore: true */ STORAGE_ROOT, storageKey), params.buffer);
   return storageKey;
 }
 
 export async function readDocumentFile(storageKey: string): Promise<Buffer> {
-  const resolved = path.join(STORAGE_ROOT, storageKey);
-  if (!resolved.startsWith(path.join(STORAGE_ROOT))) {
+  const resolved = path.join(/* turbopackIgnore: true */ STORAGE_ROOT, storageKey);
+  if (!resolved.startsWith(path.join(/* turbopackIgnore: true */ STORAGE_ROOT))) {
     throw new InvalidDocumentFileError("Invalid file path.");
   }
-  return readFile(resolved);
+  return readFile(/* turbopackIgnore: true */ resolved);
 }

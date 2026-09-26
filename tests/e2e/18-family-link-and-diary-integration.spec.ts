@@ -28,6 +28,12 @@ test("Scenario 18b: opening a patient from a diary card, and booking from the re
 }) => {
   await login(page);
 
+  // Pin the date explicitly rather than relying on two independent
+  // `new Date()` defaults (the diary's and the second booking modal's) to
+  // agree — around a midnight boundary they can land on different calendar
+  // days, which isn't a real bug, just two clocks read a moment apart.
+  const diaryDate = await page.locator('input[type="date"]').inputValue();
+
   await bookAppointment(page, {
     patientName: "Ahmed Hassan",
     practitioner: "Dr Yaman Hassan",
@@ -49,11 +55,12 @@ test("Scenario 18b: opening a patient from a diary card, and booking from the re
   const bookingDialog = page.getByRole("dialog");
   await bookingDialog.getByLabel("Practitioner").selectOption({ label: "Dr Ahmad" });
   await bookingDialog.getByLabel("Reason").selectOption({ label: "Hygiene" });
+  await bookingDialog.getByLabel("Date", { exact: true }).fill(diaryDate);
   await bookingDialog.getByLabel("Time", { exact: true }).fill("11:00");
   await bookingDialog.getByRole("button", { name: "Book Appointment" }).click();
 
   await expect(page.getByText("11:00")).toBeVisible();
 
-  await page.goto("/en/appointments");
+  await page.goto(`/en/appointments?date=${diaryDate}`);
   await expect(appointmentCard(page, "Ahmed Hassan")).toHaveCount(2);
 });

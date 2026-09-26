@@ -216,35 +216,42 @@ async function main() {
     // A handful of patients are archived/inactive so the list page and
     // "show archived" filter have something real to demonstrate.
     const status = i < 3 ? PatientStatus.ARCHIVED : i < 6 ? PatientStatus.INACTIVE : PatientStatus.ACTIVE;
+    // Built once and used for both `create` and `update` so re-running the
+    // seed against a database that already has these patient codes (from an
+    // earlier run, possibly before some of these fields existed) still
+    // converges on the documented demo data — an empty `update: {}` would
+    // silently leave pre-existing rows (and their ARCHIVED/INACTIVE status)
+    // untouched forever.
+    const patientData = {
+      practiceId: practice.id,
+      patientCode: code,
+      firstName,
+      lastName,
+      status,
+      gender,
+      preferredLanguage: Math.random() < 0.5 ? "Arabic" : "English",
+      dateOfBirth: new Date(Date.UTC(year, month - 1, day)),
+      phone: `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`,
+      homePhone: Math.random() < 0.3 ? `+963 11 ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}` : null,
+      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.test`,
+      addressLine1: `${randInt(1, 200)} ${pick(["Al Thawra St", "Baghdad St", "Mezzeh Highway", "Shukri Al Quwatli Ave"])}`,
+      city: pick(CITIES),
+      country: "Syria",
+      emergencyContactName: hasEmergencyContact ? `${pick(FIRST_NAMES)} ${lastName}` : null,
+      emergencyContactRelationship: hasEmergencyContact ? pick(EMERGENCY_RELATIONSHIPS) : null,
+      emergencyContactPhone: hasEmergencyContact
+        ? `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`
+        : null,
+      preferredPractitionerId: Math.random() < 0.6 ? pick(practitioners).id : null,
+      acquisitionSource: pick(ACQUISITION_SOURCES),
+      preferredContactMethod: pick(CONTACT_METHODS),
+      recallPreference: Math.random() < 0.4 ? "6-month recall" : null,
+      createdById: adminUser.id,
+    };
     const patient = await prisma.patient.upsert({
       where: { patientCode: code },
-      update: {},
-      create: {
-        practiceId: practice.id,
-        patientCode: code,
-        firstName,
-        lastName,
-        status,
-        gender,
-        preferredLanguage: Math.random() < 0.5 ? "Arabic" : "English",
-        dateOfBirth: new Date(Date.UTC(year, month - 1, day)),
-        phone: `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`,
-        homePhone: Math.random() < 0.3 ? `+963 11 ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}` : null,
-        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.test`,
-        addressLine1: `${randInt(1, 200)} ${pick(["Al Thawra St", "Baghdad St", "Mezzeh Highway", "Shukri Al Quwatli Ave"])}`,
-        city: pick(CITIES),
-        country: "Syria",
-        emergencyContactName: hasEmergencyContact ? `${pick(FIRST_NAMES)} ${lastName}` : null,
-        emergencyContactRelationship: hasEmergencyContact ? pick(EMERGENCY_RELATIONSHIPS) : null,
-        emergencyContactPhone: hasEmergencyContact
-          ? `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`
-          : null,
-        preferredPractitionerId: Math.random() < 0.6 ? pick(practitioners).id : null,
-        acquisitionSource: pick(ACQUISITION_SOURCES),
-        preferredContactMethod: pick(CONTACT_METHODS),
-        recallPreference: Math.random() < 0.4 ? "6-month recall" : null,
-        createdById: adminUser.id,
-      },
+      update: patientData,
+      create: patientData,
     });
     patients.push(patient);
   }
