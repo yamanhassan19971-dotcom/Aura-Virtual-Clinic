@@ -22,6 +22,9 @@ export type Permission =
   | "patients.manageFamily"
   | "patients.manageFlags"
   | "patients.archive"
+  | "patients.manageClinicalChart"
+  | "patients.manageBpe"
+  | "patients.manageClinicalImages"
   | "settings.manage"
   | "reports.view";
 
@@ -57,6 +60,9 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageFamily": true,
     "patients.manageFlags": true,
     "patients.archive": true,
+    "patients.manageClinicalChart": true,
+    "patients.manageBpe": true,
+    "patients.manageClinicalImages": true,
     "settings.manage": true,
     "reports.view": true,
   },
@@ -82,6 +88,9 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageFamily": true,
     "patients.manageFlags": true,
     "patients.archive": true,
+    "patients.manageClinicalChart": false,
+    "patients.manageBpe": false,
+    "patients.manageClinicalImages": false,
     "settings.manage": true,
     "reports.view": true,
   },
@@ -107,6 +116,9 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageFamily": true,
     "patients.manageFlags": true,
     "patients.archive": false,
+    "patients.manageClinicalChart": false,
+    "patients.manageBpe": false,
+    "patients.manageClinicalImages": false,
     "settings.manage": false,
     "reports.view": false,
   },
@@ -132,6 +144,9 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageFamily": true,
     "patients.manageFlags": true,
     "patients.archive": false,
+    "patients.manageClinicalChart": true,
+    "patients.manageBpe": true,
+    "patients.manageClinicalImages": true,
     "settings.manage": false,
     "reports.view": false,
   },

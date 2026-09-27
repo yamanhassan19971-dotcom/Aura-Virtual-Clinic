@@ -5,6 +5,13 @@ export async function resetDb() {
   await prisma.auditLog.deleteMany();
   await prisma.clinicalNoteAmendment.deleteMany();
   await prisma.clinicalNote.deleteMany();
+  // Phase 3: ClinicalImage/BpeSextantScore reference ChartEntry/BpeExam,
+  // and ChartEntry optionally references Appointment — all deleted here,
+  // well before appointment.deleteMany() below.
+  await prisma.clinicalImage.deleteMany();
+  await prisma.bpeSextantScore.deleteMany();
+  await prisma.bpeExam.deleteMany();
+  await prisma.chartEntry.deleteMany();
   await prisma.clinicalNoteTemplate.deleteMany();
   await prisma.patientTask.deleteMany();
   await prisma.patientDocument.deleteMany();

@@ -7,15 +7,17 @@ import { Link, usePathname } from "@/i18n/navigation";
 const TABS = [
   "overview",
   "details",
+  "chart",
   "medical",
   "appointments",
   "history",
+  "images",
   "notes",
   "documents",
   "tasks",
 ] as const;
-const CLINICAL_TABS = new Set<(typeof TABS)[number]>(["medical", "history"]);
-const FUTURE_TABS = ["chart", "treatmentPlans", "account"] as const;
+const CLINICAL_TABS = new Set<(typeof TABS)[number]>(["chart", "medical", "history", "images"]);
+const FUTURE_TABS = ["treatmentPlans", "account"] as const;
 
 export function PatientTabs({ patientId, canViewClinical }: { patientId: string; canViewClinical: boolean }) {
   const t = useTranslations("patient.tabs");

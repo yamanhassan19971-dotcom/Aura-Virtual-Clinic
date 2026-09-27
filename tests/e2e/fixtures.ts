@@ -10,6 +10,12 @@ export const test = base.extend({
     await prisma.auditLog.deleteMany();
     await prisma.appointmentStatusHistory.deleteMany();
     await prisma.appointment.deleteMany();
+    // Same reasoning for the dental chart — patients are reused across spec
+    // files, so each test needs a clean chart/BPE/image slate too.
+    await prisma.clinicalImage.deleteMany();
+    await prisma.bpeSextantScore.deleteMany();
+    await prisma.bpeExam.deleteMany();
+    await prisma.chartEntry.deleteMany();
     await use(page);
   },
 });

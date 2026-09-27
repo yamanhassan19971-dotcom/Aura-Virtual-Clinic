@@ -20,7 +20,9 @@
     "minutes": "دقيقة",
     "min": "د",
     "unknownError": "تعذّر حفظ هذا الإجراء. يرجى المحاولة مرة أخرى.",
-    "signOut": "تسجيل الخروج"
+    "signOut": "تسجيل الخروج",
+    "noResults": "لا توجد نتائج مطابقة لهذه الفلاتر.",
+    "practitioner": "الطبيب"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -234,6 +236,7 @@
       "documents": "المستندات",
       "tasks": "المهام",
       "chart": "المخطط السني",
+      "images": "الصور",
       "treatmentPlans": "خطط العلاج",
       "account": "الحساب"
     },
@@ -507,6 +510,112 @@
       "COMMUNICATION_PREFERENCE": "تفضيل التواصل",
       "OUTSTANDING_BALANCE": "رصيد مستحق",
       "CONSENT_REQUIRED": "يتطلب موافقة"
+    }
+  },
+  "dental": {
+    "sections": {
+      "odontogram": "المخطط السني",
+      "history": "سجل المخطط",
+      "bpe": "الفحص اللثوي الأساسي"
+    },
+    "dentitionMode": {
+      "PERMANENT": "الأسنان الدائمة",
+      "DECIDUOUS": "الأسنان اللبنية",
+      "MIXED": "مختلطة"
+    },
+    "upperArch": "الفك العلوي",
+    "lowerArch": "الفك السفلي",
+    "deciduous": "لبنية",
+    "items": {
+      "FILLING": "حشوة / ترميم",
+      "CROWN": "تاج",
+      "BRIDGE": "جسر",
+      "IMPLANT": "زراعة",
+      "ROOT_CANAL": "علاج عصب",
+      "MISSING": "مفقود",
+      "DENTURE": "طقم أسنان",
+      "VENEER": "قشرة تجميلية",
+      "OTHER": "أخرى"
+    },
+    "surfaces": {
+      "MESIAL": "إنسي",
+      "DISTAL": "وحشي",
+      "OCCLUSAL": "إطباقي",
+      "BUCCAL": "دهليزي",
+      "LINGUAL": "لساني / حنكي"
+    },
+    "status": {
+      "label": "الحالة",
+      "EXISTING": "موجود حاليًا",
+      "PLANNED": "مخطط له",
+      "COMPLETED": "مكتمل"
+    },
+    "addFinding": "إضافة نتيجة — السن {tooth}",
+    "addFindingShort": "+ إضافة نتيجة",
+    "addNoteShort": "+ إضافة ملاحظة",
+    "addNoteForTooth": "إضافة ملاحظة سريرية — السن {tooth}",
+    "itemType": "النتيجة / العلاج",
+    "scope": "النطاق",
+    "wholeTooth": "السن كاملاً",
+    "specificSurface": "سطح محدد",
+    "recordedDate": "التاريخ",
+    "practitioner": "الطبيب",
+    "note": "ملاحظة",
+    "currentFindings": "النتائج الحالية",
+    "noFindings": "لا توجد نتائج مسجلة لهذا السن بعد.",
+    "toothHistory": "سجل السن",
+    "noHistory": "لا يوجد سجل لهذا السن بعد.",
+    "retracted": "(تم التراجع عنه)",
+    "clinicalNote": "ملاحظة سريرية",
+    "markCompleted": "وضع علامة مكتمل",
+    "retract": "تراجع",
+    "retractConfirm": "التراجع عن هذا العنصر؟ لن يُحتسب ضمن الحالة الحالية، لكنه يبقى في سجل السن.",
+    "toothLabel": "السن {tooth}",
+    "plannedIndicator": "علاج مخطط له",
+    "legend": {
+      "existing": "موجود",
+      "completed": "مكتمل",
+      "planned": "مخطط له",
+      "missing": "مفقود"
+    },
+    "filterByTooth": "السن (مثال: 46)",
+    "allPractitioners": "كل الأطباء",
+    "allItemTypes": "كل أنواع النتائج",
+    "allStatuses": "كل الحالات",
+    "date": "التاريخ",
+    "tooth": "السن",
+    "finding": "النتيجة",
+    "bpeSextants": {
+      "UPPER_RIGHT": "علوي أيمن",
+      "UPPER_ANTERIOR": "علوي أمامي",
+      "UPPER_LEFT": "علوي أيسر",
+      "LOWER_RIGHT": "سفلي أيمن",
+      "LOWER_ANTERIOR": "سفلي أمامي",
+      "LOWER_LEFT": "سفلي أيسر"
+    },
+    "saveBpe": "حفظ الفحص",
+    "bpeHistory": "الفحوصات السابقة",
+    "noBpe": "لا توجد فحوصات لثوية أساسية مسجلة بعد."
+  },
+  "clinicalImages": {
+    "title": "الصور / الأشعة",
+    "upload": "رفع صورة",
+    "category": "الفئة",
+    "tooth": "السن (اختياري)",
+    "invalidTooth": "رقم السن غير صحيح.",
+    "description": "الوصف",
+    "chooseFile": "اختيار ملف",
+    "empty": "لا توجد صور سريرية مرفوعة بعد.",
+    "download": "تنزيل",
+    "preview": "معاينة",
+    "delete": "حذف",
+    "deleteConfirm": "حذف هذه الصورة؟ ستُزال من سجل المريض.",
+    "uploadedBy": "رفعها {name} بتاريخ {date}",
+    "categories": {
+      "INTRAORAL_PHOTO": "صورة داخل الفم",
+      "EXTRAORAL_PHOTO": "صورة خارج الفم",
+      "RADIOGRAPH": "أشعة",
+      "OTHER": "صورة سريرية أخرى"
     }
   }
 }

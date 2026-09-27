@@ -2,6 +2,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { APPOINTMENT_INCLUDE } from "@/lib/services/appointment-service";
 import { reciprocalRelation } from "@/lib/services/patient-service";
+import { CHART_ENTRY_INCLUDE } from "@/lib/services/chart-service";
+import { BPE_EXAM_INCLUDE } from "@/lib/services/bpe-service";
+import { chartHistoryFilterSchema } from "@/lib/validation/chart";
 
 export async function getPatientHeader(practiceId: string, patientId: string) {
   const patient = await prisma.patient.findFirst({
@@ -181,6 +184,82 @@ export async function getPatientFamily(practiceId: string, patientId: string) {
   }));
 
   return [...fromSide, ...toSide];
+}
+
+// -- Phase 3: dental clinical chart ----------------------------------------
+
+export async function getChartForPatient(practiceId: string, patientId: string) {
+  const patient = await prisma.patient.findFirst({ where: { id: patientId, practiceId }, select: { id: true } });
+  if (!patient) return [];
+  return prisma.chartEntry.findMany({
+    where: { patientId, practiceId },
+    include: CHART_ENTRY_INCLUDE,
+    orderBy: [{ recordedDate: "desc" }, { createdAt: "desc" }],
+  });
+}
+
+export async function getToothHistory(practiceId: string, patientId: string, toothNumber: string) {
+  const patient = await prisma.patient.findFirst({ where: { id: patientId, practiceId }, select: { id: true } });
+  if (!patient) return { entries: [], notes: [] };
+
+  const [entries, notes] = await Promise.all([
+    prisma.chartEntry.findMany({
+      where: { patientId, practiceId, toothNumber },
+      include: CHART_ENTRY_INCLUDE,
+      orderBy: [{ recordedDate: "desc" }, { createdAt: "desc" }],
+    }),
+    prisma.clinicalNote.findMany({
+      where: { patientId, practiceId, toothNumber },
+      include: { practitioner: { select: { name: true } }, createdBy: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  return { entries, notes };
+}
+
+export async function getChartHistory(practiceId: string, patientId: string, rawFilters: unknown = {}) {
+  const filters = chartHistoryFilterSchema.parse(rawFilters);
+  const patient = await prisma.patient.findFirst({ where: { id: patientId, practiceId }, select: { id: true } });
+  if (!patient) return [];
+
+  const where: Prisma.ChartEntryWhereInput = { patientId, practiceId };
+  if (filters.toothNumber) where.toothNumber = filters.toothNumber;
+  if (filters.practitionerId) where.practitionerId = filters.practitionerId;
+  if (filters.itemCode) where.itemCode = filters.itemCode;
+  if (filters.status) where.status = filters.status;
+  if (filters.dateFrom || filters.dateTo) {
+    where.recordedDate = {
+      ...(filters.dateFrom ? { gte: filters.dateFrom } : {}),
+      ...(filters.dateTo ? { lte: filters.dateTo } : {}),
+    };
+  }
+
+  return prisma.chartEntry.findMany({
+    where,
+    include: CHART_ENTRY_INCLUDE,
+    orderBy: [{ recordedDate: "desc" }, { createdAt: "desc" }],
+  });
+}
+
+export async function getBpeExams(practiceId: string, patientId: string) {
+  const patient = await prisma.patient.findFirst({ where: { id: patientId, practiceId }, select: { id: true } });
+  if (!patient) return [];
+  return prisma.bpeExam.findMany({
+    where: { patientId, practiceId },
+    include: BPE_EXAM_INCLUDE,
+    orderBy: { examDate: "desc" },
+  });
+}
+
+export async function getClinicalImages(practiceId: string, patientId: string) {
+  const patient = await prisma.patient.findFirst({ where: { id: patientId, practiceId }, select: { id: true } });
+  if (!patient) return [];
+  return prisma.clinicalImage.findMany({
+    where: { patientId, practiceId, deletedAt: null },
+    include: { uploadedBy: { select: { name: true } } },
+    orderBy: { uploadedAt: "desc" },
+  });
 }
 
 export async function searchPatientsFull(

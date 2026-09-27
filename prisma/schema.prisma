@@ -87,6 +87,43 @@ enum TaskStatus {
   CANCELLED
 }
 
+// Phase 3 enums ---------------------------------------------------------
+
+enum DentitionType {
+  PERMANENT
+  DECIDUOUS
+}
+
+enum ToothSurface {
+  MESIAL
+  DISTAL
+  OCCLUSAL
+  BUCCAL
+  LINGUAL
+}
+
+enum ChartEntryStatus {
+  EXISTING
+  PLANNED
+  COMPLETED
+}
+
+enum ClinicalImageCategory {
+  INTRAORAL_PHOTO
+  EXTRAORAL_PHOTO
+  RADIOGRAPH
+  OTHER
+}
+
+enum BpeSextant {
+  UPPER_RIGHT
+  UPPER_ANTERIOR
+  UPPER_LEFT
+  LOWER_RIGHT
+  LOWER_ANTERIOR
+  LOWER_LEFT
+}
+
 // A physical clinic location. Every clinical/scheduling record hangs off a
 // practice so Phase 2+ can add more locations without a schema change.
 model Practice {
@@ -107,6 +144,9 @@ model Practice {
   clinicalNoteTemplates ClinicalNoteTemplate[]
   clinicalNotes         ClinicalNote[]
   patientTasks          PatientTask[]
+  chartEntries          ChartEntry[]
+  bpeExams              BpeExam[]
+  clinicalImages        ClinicalImage[]
 
   @@map("practices")
 }
@@ -166,6 +206,12 @@ model User {
   tasksCreated           PatientTask[]               @relation("TaskCreatedBy")
   flagsCreated           PatientFlag[]
 
+  // Phase 3 back-relations
+  chartEntriesCreated    ChartEntry[]    @relation("ChartEntryCreatedBy")
+  chartEntriesResolved   ChartEntry[]    @relation("ChartEntryResolvedBy")
+  bpeExamsCreated        BpeExam[]
+  clinicalImagesUploaded ClinicalImage[]
+
   @@index([practiceId])
   @@map("users")
 }
@@ -191,6 +237,8 @@ model Practitioner {
   workingHours        WorkingHours[]
   preferredByPatients Patient[]      @relation("PreferredPractitioner")
   clinicalNotes       ClinicalNote[]
+  chartEntries        ChartEntry[]
+  bpeExams            BpeExam[]
 
   @@index([practiceId])
   @@map("practitioners")
@@ -275,6 +323,9 @@ model Patient {
   documents        PatientDocument[]
   tasks            PatientTask[]
   flags            PatientFlag[]
+  chartEntries     ChartEntry[]
+  bpeExams         BpeExam[]
+  clinicalImages   ClinicalImage[]
 
   @@index([practiceId])
   @@index([lastName, firstName])
@@ -393,6 +444,13 @@ model ClinicalNote {
   signedById     String?            @map("signed_by")
   createdById    String?            @map("created_by")
 
+  // Phase 3: optional link from a clinical note to the specific tooth/chart
+  // entry it was written about, so a note can surface in that tooth's
+  // history. Both stay nullable — every Phase 2 note (and any Phase 3 note
+  // not tied to charting) is unaffected.
+  toothNumber  String? @map("tooth_number")
+  chartEntryId String? @map("chart_entry_id")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -402,10 +460,12 @@ model ClinicalNote {
   practitioner Practitioner            @relation(fields: [practitionerId], references: [id])
   signedBy     User?                   @relation("NoteSignedBy", fields: [signedById], references: [id])
   createdBy    User?                   @relation("NoteCreatedBy", fields: [createdById], references: [id])
+  chartEntry   ChartEntry?             @relation(fields: [chartEntryId], references: [id])
   amendments   ClinicalNoteAmendment[]
 
   @@index([patientId])
   @@index([appointmentId])
+  @@index([chartEntryId])
   @@map("clinical_notes")
 }
 
@@ -570,6 +630,7 @@ model Appointment {
   statusHistory   AppointmentStatusHistory[]
   clinicalNotes   ClinicalNote[]
   tasks           PatientTask[]
+  chartEntries    ChartEntry[]
 
   @@index([practitionerId, date])
   @@index([practiceId, date])
@@ -591,6 +652,130 @@ model AppointmentStatusHistory {
 
   @@index([appointmentId])
   @@map("appointment_status_history")
+}
+
+// Phase 3: the dental clinical chart -------------------------------------
+
+// A single structured fact about one tooth (or one surface of one tooth):
+// a finding, existing restoration, or planned/completed treatment. Rows are
+// never deleted or overwritten in place — status changes and retractions
+// are audited updates to the same row (mirrors MedicalAlert's
+// active/resolvedAt pattern below), so a tooth's full history is always
+// reconstructable from this table alone. `itemCode` comes from a
+// code-defined catalog (lib/dental/chart-item-catalog.ts), the same
+// configurability approach as medical question keys and patient flags
+// above — Phase 4 can extend the vocabulary without a migration.
+// `toothNumber` is the FDI notation code (lib/dental/teeth.ts validates it
+// and derives `dentitionType`); teeth are a fixed, non-patient-specific
+// domain, so there is deliberately no separate Tooth table to join to.
+model ChartEntry {
+  id             String           @id @default(cuid())
+  practiceId     String           @map("practice_id")
+  patientId      String           @map("patient_id")
+  toothNumber    String           @map("tooth_number")
+  dentitionType  DentitionType    @map("dentition_type")
+  surface        ToothSurface? // null = whole-tooth charting, not a surface-specific finding
+  itemCode       String           @map("item_code")
+  status         ChartEntryStatus @default(EXISTING)
+  recordedDate   DateTime         @default(now()) @map("recorded_date") @db.Date
+  practitionerId String?          @map("practitioner_id")
+  appointmentId  String?          @map("appointment_id")
+  note           String?
+
+  active       Boolean   @default(true)
+  completedAt  DateTime? @map("completed_at")
+  resolvedAt   DateTime? @map("resolved_at")
+  resolvedById String?   @map("resolved_by")
+  createdById  String?   @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice       Practice        @relation(fields: [practiceId], references: [id])
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  practitioner   Practitioner?   @relation(fields: [practitionerId], references: [id])
+  appointment    Appointment?    @relation(fields: [appointmentId], references: [id])
+  createdBy      User?           @relation("ChartEntryCreatedBy", fields: [createdById], references: [id])
+  resolvedBy     User?           @relation("ChartEntryResolvedBy", fields: [resolvedById], references: [id])
+  clinicalNotes  ClinicalNote[]
+  clinicalImages ClinicalImage[]
+
+  @@index([patientId, toothNumber])
+  @@index([practiceId, patientId])
+  @@map("chart_entries")
+}
+
+// Foundation-level periodontal screening only (six BPE sextant codes) — not
+// full pocket-chart periodontal charting; see AGENTS/Phase 3 brief section
+// 16. A future phase can add detail tables (pocket depths, recession,
+// bleeding, mobility, furcation, plaque) without touching this shape.
+model BpeExam {
+  id             String   @id @default(cuid())
+  practiceId     String   @map("practice_id")
+  patientId      String   @map("patient_id")
+  practitionerId String?  @map("practitioner_id")
+  examDate       DateTime @default(now()) @map("exam_date") @db.Date
+  notes          String?
+  createdById    String?  @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  practice     Practice          @relation(fields: [practiceId], references: [id])
+  patient      Patient           @relation(fields: [patientId], references: [id])
+  practitioner Practitioner?     @relation(fields: [practitionerId], references: [id])
+  createdBy    User?             @relation(fields: [createdById], references: [id])
+  scores       BpeSextantScore[]
+
+  @@index([patientId])
+  @@map("bpe_exams")
+}
+
+// `code` is the standard BPE score 0-4, or "*" for furcation involvement.
+model BpeSextantScore {
+  id        String     @id @default(cuid())
+  bpeExamId String     @map("bpe_exam_id")
+  sextant   BpeSextant
+  code      String
+
+  bpeExam BpeExam @relation(fields: [bpeExamId], references: [id])
+
+  @@unique([bpeExamId, sextant])
+  @@map("bpe_sextant_scores")
+}
+
+// Clinical images/radiographs — deliberately a separate model from
+// PatientDocument (administrative/general documents): gated by
+// patients.viewClinical/manageClinicalImages rather than
+// patients.manageDocuments (a Receptionist can manage documents but must
+// not see clinical images), and can optionally attach to a specific tooth
+// or ChartEntry. Reuses the same private file-storage abstraction as
+// PatientDocument (lib/documents/storage.ts) and the same soft-delete
+// pattern — a clinical image is never truly removed, just hidden.
+model ClinicalImage {
+  id           String                @id @default(cuid())
+  practiceId   String                @map("practice_id")
+  patientId    String                @map("patient_id")
+  toothNumber  String?               @map("tooth_number")
+  chartEntryId String?               @map("chart_entry_id")
+  category     ClinicalImageCategory @default(OTHER)
+  filename     String
+  storageKey   String                @map("storage_key")
+  mimeType     String                @map("mime_type")
+  sizeBytes    Int                   @map("size_bytes")
+  description  String?
+  capturedDate DateTime              @default(now()) @map("captured_date") @db.Date
+  uploadedById String?               @map("uploaded_by")
+
+  uploadedAt DateTime  @default(now()) @map("uploaded_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  practice   Practice    @relation(fields: [practiceId], references: [id])
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  chartEntry ChartEntry? @relation(fields: [chartEntryId], references: [id])
+  uploadedBy User?       @relation(fields: [uploadedById], references: [id])
+
+  @@index([patientId])
+  @@map("clinical_images")
 }
 
 model AuditLog {

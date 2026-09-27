@@ -20,7 +20,9 @@
     "minutes": "minutes",
     "min": "min",
     "unknownError": "We couldn't save this. Please try again.",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "noResults": "No results match these filters.",
+    "practitioner": "Practitioner"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -234,6 +236,7 @@
       "documents": "Documents",
       "tasks": "Tasks",
       "chart": "Chart",
+      "images": "Images",
       "treatmentPlans": "Treatment Plans",
       "account": "Account"
     },
@@ -507,6 +510,112 @@
       "COMMUNICATION_PREFERENCE": "Communication Preference",
       "OUTSTANDING_BALANCE": "Outstanding Balance",
       "CONSENT_REQUIRED": "Consent Required"
+    }
+  },
+  "dental": {
+    "sections": {
+      "odontogram": "Odontogram",
+      "history": "Chart History",
+      "bpe": "BPE"
+    },
+    "dentitionMode": {
+      "PERMANENT": "Permanent",
+      "DECIDUOUS": "Deciduous",
+      "MIXED": "Mixed"
+    },
+    "upperArch": "Upper",
+    "lowerArch": "Lower",
+    "deciduous": "Deciduous",
+    "items": {
+      "FILLING": "Filling / Restoration",
+      "CROWN": "Crown",
+      "BRIDGE": "Bridge",
+      "IMPLANT": "Implant",
+      "ROOT_CANAL": "Root Canal Treatment",
+      "MISSING": "Missing",
+      "DENTURE": "Denture",
+      "VENEER": "Veneer",
+      "OTHER": "Other"
+    },
+    "surfaces": {
+      "MESIAL": "Mesial",
+      "DISTAL": "Distal",
+      "OCCLUSAL": "Occlusal",
+      "BUCCAL": "Buccal",
+      "LINGUAL": "Lingual / Palatal"
+    },
+    "status": {
+      "label": "Status",
+      "EXISTING": "Existing",
+      "PLANNED": "Planned",
+      "COMPLETED": "Completed"
+    },
+    "addFinding": "Add Finding — Tooth {tooth}",
+    "addFindingShort": "+ Add Finding",
+    "addNoteShort": "+ Add Note",
+    "addNoteForTooth": "Add Clinical Note — Tooth {tooth}",
+    "itemType": "Finding / Treatment",
+    "scope": "Scope",
+    "wholeTooth": "Whole tooth",
+    "specificSurface": "Specific surface",
+    "recordedDate": "Date",
+    "practitioner": "Practitioner",
+    "note": "Note",
+    "currentFindings": "Current Findings",
+    "noFindings": "No findings charted for this tooth yet.",
+    "toothHistory": "Tooth History",
+    "noHistory": "No history for this tooth yet.",
+    "retracted": "(retracted)",
+    "clinicalNote": "Clinical note",
+    "markCompleted": "Mark Completed",
+    "retract": "Retract",
+    "retractConfirm": "Retract this entry? It will no longer count as current, but stays in the tooth's history.",
+    "toothLabel": "Tooth {tooth}",
+    "plannedIndicator": "Planned treatment",
+    "legend": {
+      "existing": "Existing",
+      "completed": "Completed",
+      "planned": "Planned",
+      "missing": "Missing"
+    },
+    "filterByTooth": "Tooth (e.g. 46)",
+    "allPractitioners": "All practitioners",
+    "allItemTypes": "All finding types",
+    "allStatuses": "All statuses",
+    "date": "Date",
+    "tooth": "Tooth",
+    "finding": "Finding",
+    "bpeSextants": {
+      "UPPER_RIGHT": "Upper Right",
+      "UPPER_ANTERIOR": "Upper Anterior",
+      "UPPER_LEFT": "Upper Left",
+      "LOWER_RIGHT": "Lower Right",
+      "LOWER_ANTERIOR": "Lower Anterior",
+      "LOWER_LEFT": "Lower Left"
+    },
+    "saveBpe": "Save BPE Exam",
+    "bpeHistory": "Previous Exams",
+    "noBpe": "No BPE exams recorded yet."
+  },
+  "clinicalImages": {
+    "title": "Images / Radiographs",
+    "upload": "Upload Image",
+    "category": "Category",
+    "tooth": "Tooth (optional)",
+    "invalidTooth": "Not a valid FDI tooth number.",
+    "description": "Description",
+    "chooseFile": "Choose file",
+    "empty": "No clinical images uploaded yet.",
+    "download": "Download",
+    "preview": "Preview",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this image? It will be removed from the patient record.",
+    "uploadedBy": "Uploaded by {name} on {date}",
+    "categories": {
+      "INTRAORAL_PHOTO": "Intraoral Photograph",
+      "EXTRAORAL_PHOTO": "Extraoral Photograph",
+      "RADIOGRAPH": "Radiograph",
+      "OTHER": "Other Clinical Image"
     }
   }
 }

@@ -23,6 +23,13 @@ export async function createClinicalNote(actor: Actor, rawInput: unknown) {
     });
     if (!practitioner) throw new NotFoundError("Practitioner not found");
 
+    if (input.chartEntryId) {
+      const chartEntry = await tx.chartEntry.findFirst({
+        where: { id: input.chartEntryId, practiceId: actor.practiceId, patientId: input.patientId },
+      });
+      if (!chartEntry) throw new NotFoundError("Chart entry not found");
+    }
+
     const note = await tx.clinicalNote.create({
       data: {
         practiceId: actor.practiceId,
@@ -31,6 +38,8 @@ export async function createClinicalNote(actor: Actor, rawInput: unknown) {
         practitionerId: input.practitionerId,
         content: input.content,
         createdById: actor.id,
+        toothNumber: input.toothNumber || null,
+        chartEntryId: input.chartEntryId || null,
       },
     });
 

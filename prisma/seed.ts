@@ -8,6 +8,7 @@ import {
   MedicalAnswerValue,
   ClinicalNoteStatus,
   DocumentCategory,
+  ClinicalImageCategory,
   TaskStatus,
   type Practitioner,
   type AppointmentType,
@@ -272,6 +273,12 @@ async function main() {
   await prisma.patientNote.deleteMany({ where: {} });
   await prisma.patientFlag.deleteMany({ where: {} });
   await prisma.patientFamilyRelationship.deleteMany({ where: {} });
+  // Phase 3 records, same "regenerated fresh every run" approach —
+  // ClinicalImage/BpeSextantScore first since they reference ChartEntry/BpeExam.
+  await prisma.clinicalImage.deleteMany({ where: {} });
+  await prisma.bpeSextantScore.deleteMany({ where: {} });
+  await prisma.bpeExam.deleteMany({ where: {} });
+  await prisma.chartEntry.deleteMany({ where: {} });
 
   await prisma.appointmentStatusHistory.deleteMany({ where: {} });
   await prisma.appointment.deleteMany({ where: {} });
@@ -822,6 +829,208 @@ async function main() {
     flagCount++;
   }
 
+  // ---------------------------------------------------------------------
+  // Phase 3: dedicated dental-chart demo patients (A-H per the Phase 3
+  // brief), each illustrating one chart scenario clearly rather than
+  // relying on the random patient pool above. Fixed patient codes/IDs so
+  // re-seeding always converges on the same demo state.
+  // ---------------------------------------------------------------------
+
+  const chartDemoDob = (year: number) => new Date(Date.UTC(year, 5, 15));
+  const drA = practitioners[0];
+  const drB = practitioners[1];
+
+  async function upsertChartDemoPatient(code: string, firstName: string, lastName: string, dob: Date) {
+    const data = {
+      practiceId: practice.id,
+      patientCode: code,
+      firstName,
+      lastName,
+      dateOfBirth: dob,
+      status: PatientStatus.ACTIVE,
+      gender: "Female",
+      phone: `+963 9${pad(randInt(10, 99))} ${pad(randInt(100, 999), 3)} ${pad(randInt(100, 999), 3)}`,
+      country: "Syria",
+      city: "Damascus",
+      createdById: adminUser.id,
+    };
+    return prisma.patient.upsert({ where: { patientCode: code }, update: data, create: data });
+  }
+
+  const chartPatientA = await upsertChartDemoPatient("P30001", "Noor", "Khalil", chartDemoDob(1988));
+  const chartPatientB = await upsertChartDemoPatient("P30002", "Bilal", "Youssef", chartDemoDob(1975));
+  const chartPatientC = await upsertChartDemoPatient("P30003", "Widad", "Saleh", chartDemoDob(1960));
+  const chartPatientD = await upsertChartDemoPatient("P30004", "Diana", "Haddad", chartDemoDob(1982));
+  const chartPatientE = await upsertChartDemoPatient("P30005", "Yara", "Suleiman", chartDemoDob(2018));
+  const chartPatientF = await upsertChartDemoPatient("P30006", "Fadi", "Mansour", chartDemoDob(1979));
+  const chartPatientG = await upsertChartDemoPatient("P30007", "Ghina", "Nasser", chartDemoDob(1991));
+  const chartPatientH = await upsertChartDemoPatient("P30008", "Hadi", "Aziz", chartDemoDob(1995));
+
+  type ChartEntrySeed = {
+    toothNumber: string;
+    dentitionType: "PERMANENT" | "DECIDUOUS";
+    surface?: "MESIAL" | "DISTAL" | "OCCLUSAL" | "BUCCAL" | "LINGUAL";
+    itemCode: string;
+    status: "EXISTING" | "PLANNED" | "COMPLETED";
+    daysAgo: number;
+    note?: string;
+  };
+
+  async function seedChartEntries(patientId: string, practitionerId: string, entries: ChartEntrySeed[]) {
+    let count = 0;
+    for (const e of entries) {
+      const recordedDate = new Date(Date.now() - e.daysAgo * 86400000);
+      recordedDate.setHours(0, 0, 0, 0);
+      await prisma.chartEntry.create({
+        data: {
+          practiceId: practice.id,
+          patientId,
+          toothNumber: e.toothNumber,
+          dentitionType: e.dentitionType,
+          surface: e.surface,
+          itemCode: e.itemCode,
+          status: e.status,
+          recordedDate,
+          practitionerId,
+          note: e.note,
+          completedAt: e.status === "COMPLETED" ? recordedDate : null,
+          createdById: adminUser.id,
+        },
+      });
+      count++;
+    }
+    return count;
+  }
+
+  let chartEntryCount = 0;
+
+  // Patient A — healthy / mostly unremarkable chart, one small existing filling.
+  chartEntryCount += await seedChartEntries(chartPatientA.id, drA.id, [
+    { toothNumber: "16", dentitionType: "PERMANENT", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 400 },
+  ]);
+
+  // Patient B — multiple restorations across several teeth/surfaces.
+  chartEntryCount += await seedChartEntries(chartPatientB.id, drA.id, [
+    { toothNumber: "16", dentitionType: "PERMANENT", surface: "MESIAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 900 },
+    { toothNumber: "16", dentitionType: "PERMANENT", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 900 },
+    { toothNumber: "16", dentitionType: "PERMANENT", surface: "DISTAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 900 },
+    { toothNumber: "26", dentitionType: "PERMANENT", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 500 },
+    { toothNumber: "36", dentitionType: "PERMANENT", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 500 },
+    { toothNumber: "36", dentitionType: "PERMANENT", surface: "DISTAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 500 },
+    { toothNumber: "47", dentitionType: "PERMANENT", itemCode: "CROWN", status: "EXISTING", daysAgo: 200 },
+  ]);
+
+  // Patient C — missing teeth (both historic extractions and congenitally absent wisdom teeth).
+  chartEntryCount += await seedChartEntries(chartPatientC.id, drB.id, [
+    { toothNumber: "18", dentitionType: "PERMANENT", itemCode: "MISSING", status: "EXISTING", daysAgo: 3000, note: "Extracted — impacted." },
+    { toothNumber: "28", dentitionType: "PERMANENT", itemCode: "MISSING", status: "EXISTING", daysAgo: 3000, note: "Extracted — impacted." },
+    { toothNumber: "38", dentitionType: "PERMANENT", itemCode: "MISSING", status: "EXISTING", daysAgo: 2500 },
+    { toothNumber: "48", dentitionType: "PERMANENT", itemCode: "MISSING", status: "EXISTING", daysAgo: 2500 },
+    { toothNumber: "16", dentitionType: "PERMANENT", itemCode: "MISSING", status: "EXISTING", daysAgo: 1200, note: "Extracted due to extensive decay." },
+  ]);
+
+  // Patient D — existing crown following root canal treatment on the same tooth.
+  chartEntryCount += await seedChartEntries(chartPatientD.id, drA.id, [
+    { toothNumber: "46", dentitionType: "PERMANENT", itemCode: "ROOT_CANAL", status: "EXISTING", daysAgo: 700, note: "RCT completed prior to crown." },
+    { toothNumber: "46", dentitionType: "PERMANENT", itemCode: "CROWN", status: "EXISTING", daysAgo: 650 },
+    { toothNumber: "36", dentitionType: "PERMANENT", itemCode: "CROWN", status: "EXISTING", daysAgo: 900 },
+  ]);
+
+  // Patient E — mixed dentition (young patient with both deciduous and permanent teeth charted).
+  chartEntryCount += await seedChartEntries(chartPatientE.id, drA.id, [
+    { toothNumber: "84", dentitionType: "DECIDUOUS", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 150 },
+    { toothNumber: "74", dentitionType: "DECIDUOUS", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 150 },
+    { toothNumber: "55", dentitionType: "DECIDUOUS", itemCode: "MISSING", status: "EXISTING", daysAgo: 30, note: "Naturally exfoliated." },
+    { toothNumber: "11", dentitionType: "PERMANENT", itemCode: "OTHER", status: "EXISTING", daysAgo: 30, note: "Newly erupted, monitoring." },
+  ]);
+
+  // Patient F — several planned treatments (not yet carried out).
+  chartEntryCount += await seedChartEntries(chartPatientF.id, drB.id, [
+    { toothNumber: "26", dentitionType: "PERMANENT", itemCode: "CROWN", status: "PLANNED", daysAgo: 5, note: "Planned following large existing restoration." },
+    { toothNumber: "26", dentitionType: "PERMANENT", surface: "OCCLUSAL", itemCode: "FILLING", status: "EXISTING", daysAgo: 600 },
+    { toothNumber: "37", dentitionType: "PERMANENT", surface: "MESIAL", itemCode: "FILLING", status: "PLANNED", daysAgo: 5 },
+    { toothNumber: "11", dentitionType: "PERMANENT", surface: "MESIAL", itemCode: "VENEER", status: "PLANNED", daysAgo: 5 },
+    { toothNumber: "48", dentitionType: "PERMANENT", itemCode: "MISSING", status: "PLANNED", daysAgo: 5, note: "Extraction planned — impacted." },
+  ]);
+
+  // Patient H — a couple of confirmed findings to give the images tab a chart to reference.
+  chartEntryCount += await seedChartEntries(chartPatientH.id, drA.id, [
+    { toothNumber: "26", dentitionType: "PERMANENT", surface: "OCCLUSAL", itemCode: "FILLING", status: "COMPLETED", daysAgo: 10 },
+  ]);
+
+  // Patient G — BPE history (two exams over time).
+  const bpeExam1 = await prisma.bpeExam.create({
+    data: {
+      practiceId: practice.id,
+      patientId: chartPatientG.id,
+      practitionerId: drA.id,
+      examDate: new Date(Date.now() - 400 * 86400000),
+      notes: "Generalised mild gingivitis, reinforced oral hygiene instruction.",
+      createdById: adminUser.id,
+      scores: {
+        create: [
+          { sextant: "UPPER_RIGHT", code: "1" },
+          { sextant: "UPPER_ANTERIOR", code: "1" },
+          { sextant: "UPPER_LEFT", code: "2" },
+          { sextant: "LOWER_RIGHT", code: "1" },
+          { sextant: "LOWER_ANTERIOR", code: "0" },
+          { sextant: "LOWER_LEFT", code: "1" },
+        ],
+      },
+    },
+  });
+  const bpeExam2 = await prisma.bpeExam.create({
+    data: {
+      practiceId: practice.id,
+      patientId: chartPatientG.id,
+      practitionerId: drA.id,
+      examDate: new Date(Date.now() - 30 * 86400000),
+      notes: "Improved since last exam following scale and polish.",
+      createdById: adminUser.id,
+      scores: {
+        create: [
+          { sextant: "UPPER_RIGHT", code: "1" },
+          { sextant: "UPPER_ANTERIOR", code: "0" },
+          { sextant: "UPPER_LEFT", code: "1" },
+          { sextant: "LOWER_RIGHT", code: "0" },
+          { sextant: "LOWER_ANTERIOR", code: "0" },
+          { sextant: "LOWER_LEFT", code: "1" },
+        ],
+      },
+    },
+  });
+  const bpeExamCount = [bpeExam1, bpeExam2].length;
+
+  // Patient H — clinical images/radiographs (reuses the same private file
+  // storage helper the app uses, so download/preview work identically).
+  let clinicalImageCount = 0;
+  for (const spec of [
+    { category: ClinicalImageCategory.RADIOGRAPH, toothNumber: "26", suffix: "radiograph" },
+    { category: ClinicalImageCategory.INTRAORAL_PHOTO, toothNumber: null, suffix: "intraoral" },
+  ] as const) {
+    const filename = `${spec.suffix}-${chartPatientH.patientCode}.png`;
+    const storageKey = await saveDocumentFile({
+      practiceId: practice.id,
+      patientId: chartPatientH.id,
+      filename,
+      buffer: TINY_PNG,
+    });
+    await prisma.clinicalImage.create({
+      data: {
+        patientId: chartPatientH.id,
+        practiceId: practice.id,
+        toothNumber: spec.toothNumber,
+        category: spec.category,
+        filename,
+        storageKey,
+        mimeType: "image/png",
+        sizeBytes: TINY_PNG.byteLength,
+        uploadedById: adminUser.id,
+      },
+    });
+    clinicalImageCount++;
+  }
+
   console.log("Seed complete:");
   console.log(`  Practice: ${practice.name}`);
   console.log(`  Practitioners: ${practitioners.length}`);
@@ -835,6 +1044,9 @@ async function main() {
   console.log(`  Documents: ${documentCount}`);
   console.log(`  Tasks: ${taskCount}`);
   console.log(`  Flags: ${flagCount}`);
+  console.log(`  Chart entries (demo patients A-H): ${chartEntryCount}`);
+  console.log(`  BPE exams (demo patient G): ${bpeExamCount}`);
+  console.log(`  Clinical images (demo patient H): ${clinicalImageCount}`);
   console.log(`  Demo login password for all seeded users: ${DEV_PASSWORD}`);
 }
 

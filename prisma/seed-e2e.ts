@@ -15,6 +15,10 @@ async function main() {
   // Patient/Appointment deletes below hit a foreign key violation.
   await prisma.clinicalNoteAmendment.deleteMany();
   await prisma.clinicalNote.deleteMany();
+  await prisma.clinicalImage.deleteMany();
+  await prisma.bpeSextantScore.deleteMany();
+  await prisma.bpeExam.deleteMany();
+  await prisma.chartEntry.deleteMany();
   await prisma.clinicalNoteTemplate.deleteMany();
   await prisma.medicalHistoryAnswer.deleteMany();
   await prisma.medicalHistory.deleteMany();
@@ -103,6 +107,15 @@ async function main() {
       email: "reception@aura.dev",
       name: "Reception Desk",
       role: Role.RECEPTIONIST,
+      passwordHash,
+    },
+  });
+  await prisma.user.create({
+    data: {
+      practiceId: practice.id,
+      email: "manager@aura.dev",
+      name: "Practice Manager",
+      role: Role.PRACTICE_MANAGER,
       passwordHash,
     },
   });

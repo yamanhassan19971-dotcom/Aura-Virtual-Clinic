@@ -71,6 +71,7 @@ export function PatientHeaderBar({
 
   const canBook = can(currentUserRole, "appointments.create");
   const canEditDemo = can(currentUserRole, "patients.editDemographics");
+  const canViewChart = can(currentUserRole, "patients.viewClinical");
   const canMedical = can(currentUserRole, "patients.manageMedicalHistory");
   const canClinicalNotes = can(currentUserRole, "patients.manageClinicalNotes");
   const canDocs = can(currentUserRole, "patients.manageDocuments");
@@ -142,6 +143,14 @@ export function PatientHeaderBar({
               className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
             >
               {tQuick("editDetails")}
+            </Link>
+          )}
+          {canViewChart && (
+            <Link
+              href={`/patients/${patient.id}/chart`}
+              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              {tQuick("openChart")}
             </Link>
           )}
           {canMedical && (

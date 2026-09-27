@@ -60,6 +60,14 @@ export async function openPatientRecord(page: Page, patientName: string) {
   await page.waitForURL("**/patients/**/overview**");
 }
 
+export function toothButton(page: Page, fdi: string) {
+  return page.locator(`[data-testid="tooth-button"][data-tooth="${fdi}"]`);
+}
+
+export function toothSurfaceButton(page: Page, fdi: string, surface: string) {
+  return page.locator(`[data-testid="tooth-surface-button"][data-tooth="${fdi}"][data-surface="${surface}"]`);
+}
+
 /** Drags an appointment's resize handle down by `deltaY` pixels to grow its duration. */
 export async function resizeCardBy(page: Page, card: ReturnType<typeof appointmentCard>, deltaY: number) {
   const handle = card.locator('[data-testid="appointment-resize-handle"]');
