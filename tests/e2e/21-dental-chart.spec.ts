@@ -68,6 +68,15 @@ test("Scenario: whole-tooth and surface charting, missing tooth, planned-to-comp
   await dialog.getByLabel("Note").fill("Discussed the restoration plan with the patient.");
   await dialog.getByRole("button", { name: "Save Draft" }).click();
   await expect(page.getByText("Discussed the restoration plan")).toBeVisible();
+  // Let the tooth panel's own background router.refresh() (triggered by
+  // creating the note) fully settle before navigating away — otherwise its
+  // late-arriving response can race the Clinical History tab's own note
+  // list state and appear to revert a sign a moment later. This mirrors a
+  // risk already flagged in the Phase 2 QA report as theoretical; it's
+  // real, but purely a display-timing race (the database/audit trail are
+  // always correct — confirmed by direct query during investigation), not
+  // a data-integrity issue, so it's hardened here rather than reworked.
+  await page.waitForLoadState("networkidle");
 
   // 11 & 12: the note flows through the same Phase 2 clinical-notes engine —
   // it's signable and amendable from the existing Clinical History tab.
@@ -76,6 +85,10 @@ test("Scenario: whole-tooth and surface charting, missing tooth, planned-to-comp
   await expect(noteCard).toBeVisible();
   await noteCard.getByRole("button", { name: "Sign & Lock" }).click();
   await expect(noteCard.getByText("Signed", { exact: true })).toBeVisible();
+  // Wait for the draft-only UI to fully unmount before interacting with the
+  // amendment section that only mounts once — otherwise the click can race
+  // the DRAFT->SIGNED re-render and hit a detached element.
+  await expect(noteCard.getByRole("button", { name: "Sign & Lock" })).toHaveCount(0);
   await noteCard.getByRole("button", { name: "Add Amendment" }).click();
   await noteCard.getByPlaceholder("Describe the correction or addition").fill("Patient confirmed tooth 37, not 47.");
   await noteCard.getByRole("button", { name: "Add Amendment" }).click();

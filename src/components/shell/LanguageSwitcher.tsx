@@ -26,16 +26,6 @@ export function LanguageSwitcher() {
       <GlobeIcon className="ms-1.5 text-gray-400" />
       <button
         type="button"
-        onClick={() => switchTo("en")}
-        aria-pressed={locale === "en"}
-        className={`rounded px-2 py-1 font-medium transition-colors ${
-          locale === "en" ? "bg-[var(--color-navy)] text-white" : "text-gray-500 hover:bg-gray-100"
-        }`}
-      >
-        {t("english")}
-      </button>
-      <button
-        type="button"
         onClick={() => switchTo("ar")}
         aria-pressed={locale === "ar"}
         className={`rounded px-2 py-1 font-medium transition-colors ${
@@ -43,6 +33,16 @@ export function LanguageSwitcher() {
         }`}
       >
         {t("arabic")}
+      </button>
+      <button
+        type="button"
+        onClick={() => switchTo("en")}
+        aria-pressed={locale === "en"}
+        className={`rounded px-2 py-1 font-medium transition-colors ${
+          locale === "en" ? "bg-[var(--color-navy)] text-white" : "text-gray-500 hover:bg-gray-100"
+        }`}
+      >
+        {t("english")}
       </button>
     </div>
   );
