@@ -152,6 +152,7 @@
     "cancelAppt": "إلغاء",
     "markFta": "تحديد كـ لم يحضر",
     "openPatient": "فتح ملف المريض",
+    "closePanel": "إغلاق اللوحة",
     "statusHistory": "سجل الحالة",
     "patientInfo": "المريض",
     "appointmentInfo": "الموعد",
@@ -526,6 +527,16 @@
     "upperArch": "الفك العلوي",
     "lowerArch": "الفك السفلي",
     "deciduous": "لبنية",
+    "toothNames": {
+      "CENTRAL_INCISOR": "القاطعة الوسطى",
+      "LATERAL_INCISOR": "القاطعة الجانبية",
+      "CANINE": "الناب",
+      "FIRST_PREMOLAR": "الضاحك الأول",
+      "SECOND_PREMOLAR": "الضاحك الثاني",
+      "FIRST_MOLAR": "الضرس الأول",
+      "SECOND_MOLAR": "الضرس الثاني",
+      "THIRD_MOLAR": "الضرس الثالث"
+    },
     "items": {
       "FILLING": "حشوة / ترميم",
       "CROWN": "تاج",

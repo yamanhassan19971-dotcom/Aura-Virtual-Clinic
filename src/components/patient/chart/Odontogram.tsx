@@ -125,7 +125,14 @@ function ArchRow({
   return (
     <div className="flex flex-col items-center gap-1">
       {label && <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>}
-      <div className="flex flex-wrap justify-center gap-1.5">
+      {/* Dental anatomy is orientation-fixed (patient's right on the
+          viewer's left), never mirrored by the interface's text direction.
+          `dir="ltr"` pins this row's layout regardless of the app locale —
+          without it, an ambient `dir="rtl"` (Arabic) would flip this flex
+          row and silently swap quadrants, corrupting the chart's clinical
+          meaning. Tooth numbers are digits (bidi-neutral either way), so
+          this has no effect on how they read. */}
+      <div dir="ltr" className="flex flex-wrap justify-center gap-1.5">
         {teeth.map((tooth) => (
           <ToothBox
             key={tooth.fdi}

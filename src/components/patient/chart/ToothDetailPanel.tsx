@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { Practitioner } from "@prisma/client";
 import { useRouter } from "@/i18n/navigation";
 import { formatLongDate } from "@/lib/time";
-import { toothName } from "@/lib/dental/teeth";
+import { toothNameKey } from "@/lib/dental/teeth";
 import { useToast } from "@/components/ui/Toast";
 import { completeChartEntryAction, retractChartEntryAction } from "@/lib/actions/chart-actions";
 import { getToothHistoryAction } from "@/lib/actions/query-actions";
@@ -98,7 +98,7 @@ export function ToothDetailPanel({
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-base font-semibold text-[var(--color-text)]">{t("toothLabel", { tooth: toothNumber })}</h3>
-          <p className="text-xs text-gray-500">{toothName(toothNumber)}</p>
+          <p className="text-xs text-gray-500">{toothNameKey(toothNumber) ? t(`toothNames.${toothNameKey(toothNumber)}`) : ""}</p>
         </div>
         <button type="button" onClick={onClose} aria-label={tCommon("close")} className="text-gray-400 hover:text-gray-600">
           ✕

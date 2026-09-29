@@ -14,6 +14,7 @@ export function WaitingRoomPanel({
   onOpen: (id: string) => void;
 }) {
   const t = useTranslations("waitingRoom");
+  const tPanel = useTranslations("panel");
   const locale = useLocale();
   const [, forceTick] = useState(0);
 
@@ -52,7 +53,7 @@ export function WaitingRoomPanel({
               </button>
               <Link
                 href={`/patients/${appt.patientId}/overview?fromAppointment=${appt.id}&returnDate=${toDateParam(appt.startTime)}`}
-                title="Open Patient"
+                title={tPanel("openPatient")}
                 className="absolute end-2 top-2 text-xs font-medium text-[var(--color-status-arrived)] opacity-70 hover:underline hover:opacity-100"
               >
                 ↗

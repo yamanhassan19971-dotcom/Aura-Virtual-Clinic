@@ -20,18 +20,23 @@ export type ToothInfo = {
   positionInQuadrant: number;
 };
 
-const PERMANENT_NAMES = [
-  "Central Incisor",
-  "Lateral Incisor",
-  "Canine",
-  "First Premolar",
-  "Second Premolar",
-  "First Molar",
-  "Second Molar",
-  "Third Molar",
-];
+// Translation keys (dental.toothNames.<KEY> in the i18n catalog) — never
+// display these directly, the anatomical name must go through the app's
+// translation system like every other user-facing string.
+const PERMANENT_NAME_KEYS = [
+  "CENTRAL_INCISOR",
+  "LATERAL_INCISOR",
+  "CANINE",
+  "FIRST_PREMOLAR",
+  "SECOND_PREMOLAR",
+  "FIRST_MOLAR",
+  "SECOND_MOLAR",
+  "THIRD_MOLAR",
+] as const;
 
-const DECIDUOUS_NAMES = ["Central Incisor", "Lateral Incisor", "Canine", "First Molar", "Second Molar"];
+const DECIDUOUS_NAME_KEYS = ["CENTRAL_INCISOR", "LATERAL_INCISOR", "CANINE", "FIRST_MOLAR", "SECOND_MOLAR"] as const;
+
+export type ToothNameKey = (typeof PERMANENT_NAME_KEYS)[number];
 
 // Quadrant 1 = upper right, 2 = upper left, 3 = lower left, 4 = lower right
 // (permanent); 5-8 mirror the same layout for deciduous teeth.
@@ -89,11 +94,12 @@ export function hasOcclusalSurface(fdi: string): boolean {
   return info !== undefined && info.positionInQuadrant >= 4;
 }
 
-export function toothName(fdi: string): string {
+/** Returns a translation key for the tooth's anatomical name — translate via t(`toothNames.${key}`), never displayed raw. */
+export function toothNameKey(fdi: string): ToothNameKey | undefined {
   const info = TEETH_BY_FDI.get(fdi);
-  if (!info) return fdi;
-  const names = info.dentitionType === "PERMANENT" ? PERMANENT_NAMES : DECIDUOUS_NAMES;
-  return names[info.positionInQuadrant - 1] ?? fdi;
+  if (!info) return undefined;
+  const keys = info.dentitionType === "PERMANENT" ? PERMANENT_NAME_KEYS : DECIDUOUS_NAME_KEYS;
+  return keys[info.positionInQuadrant - 1];
 }
 
 /** Upper-arch teeth in clinically intuitive left-to-right screen order (patient's right on the viewer's left). */

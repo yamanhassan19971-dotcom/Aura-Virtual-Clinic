@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 
 export function Modal({
   title,
@@ -14,6 +15,7 @@ export function Modal({
   children: React.ReactNode;
   width?: "sm" | "md" | "lg";
 }) {
+  const t = useTranslations("common");
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -39,7 +41,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("close")}
             className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
             ✕

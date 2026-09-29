@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import type { AppointmentType, MedicalAlert, Patient, PatientFlag, Practitioner, Role, Room } from "@prisma/client";
 import { Link } from "@/i18n/navigation";
+import { ChevronIcon } from "@/components/shell/icons";
 import { AlertBadge } from "@/components/patient/AlertBadge";
 import { FlagBadge } from "@/components/patient/FlagBadge";
 import { Modal } from "@/components/ui/Modal";
@@ -100,7 +101,7 @@ export function PatientHeaderBar({
             href={`/appointments${returnDate ? `?date=${returnDate}` : ""}`}
             className="mb-1 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-blue)] hover:underline"
           >
-            ‹ {t("backToDiary")}
+            <ChevronIcon className="rtl:rotate-180" width={12} height={12} /> {t("backToDiary")}
           </Link>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold text-[var(--color-text)]">

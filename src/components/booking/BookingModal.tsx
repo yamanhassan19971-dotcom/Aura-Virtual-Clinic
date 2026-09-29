@@ -46,6 +46,7 @@ export function BookingModal({
   onUpdated: (appt: AppointmentWithRelations) => void;
 }) {
   const t = useTranslations("booking");
+  const tStatus = useTranslations("status");
   const initialStart = appointment?.startTime ?? draft?.startTime ?? new Date();
 
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
@@ -259,8 +260,8 @@ export function BookingModal({
               onChange={(e) => setStatus(e.target.value as "PENDING" | "CONFIRMED")}
               className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm"
             >
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
+              <option value="PENDING">{tStatus("PENDING")}</option>
+              <option value="CONFIRMED">{tStatus("CONFIRMED")}</option>
             </select>
           </label>
         )}

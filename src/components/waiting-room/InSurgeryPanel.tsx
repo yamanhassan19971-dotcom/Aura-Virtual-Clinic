@@ -13,6 +13,7 @@ export function InSurgeryPanel({
   onOpen: (id: string) => void;
 }) {
   const t = useTranslations("inSurgery");
+  const tPanel = useTranslations("panel");
   const locale = useLocale();
   const sorted = [...appointments].sort((a, b) => (a.inSurgeryAt?.getTime() ?? 0) - (b.inSurgeryAt?.getTime() ?? 0));
 
@@ -40,7 +41,7 @@ export function InSurgeryPanel({
               </button>
               <Link
                 href={`/patients/${appt.patientId}/overview?fromAppointment=${appt.id}&returnDate=${toDateParam(appt.startTime)}`}
-                title="Open Patient"
+                title={tPanel("openPatient")}
                 className="absolute end-2 top-2 text-xs font-medium text-[var(--color-status-insurgery)] opacity-70 hover:underline hover:opacity-100"
               >
                 ↗

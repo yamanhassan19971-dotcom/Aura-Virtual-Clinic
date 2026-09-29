@@ -22,6 +22,7 @@ export function AppointmentCard({
 }) {
   const locale = useLocale();
   const t = useTranslations("status");
+  const tPanel = useTranslations("panel");
   const colors = STATUS_COLOR_VAR[appointment.status];
 
   const move = useDraggable({
@@ -96,7 +97,7 @@ export function AppointmentCard({
           href={`/patients/${appointment.patientId}/overview?fromAppointment=${appointment.id}&returnDate=${toDateParam(appointment.startTime)}`}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
-          title="Open Patient"
+          title={tPanel("openPatient")}
           data-testid="appointment-open-patient"
           className="absolute end-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded text-[10px] text-gray-400 opacity-0 hover:bg-gray-100 hover:text-[var(--color-blue)] group-hover:opacity-100"
         >

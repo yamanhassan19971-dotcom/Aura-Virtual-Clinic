@@ -83,7 +83,7 @@ export function AppointmentDetailsPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close panel"
+          aria-label={t("closePanel")}
           className="rounded p-1 text-gray-400 hover:bg-gray-100"
         >
           ✕

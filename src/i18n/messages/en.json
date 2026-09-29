@@ -152,6 +152,7 @@
     "cancelAppt": "Cancel",
     "markFta": "Mark FTA",
     "openPatient": "Open Patient",
+    "closePanel": "Close panel",
     "statusHistory": "Status history",
     "patientInfo": "Patient",
     "appointmentInfo": "Appointment",
@@ -526,6 +527,16 @@
     "upperArch": "Upper",
     "lowerArch": "Lower",
     "deciduous": "Deciduous",
+    "toothNames": {
+      "CENTRAL_INCISOR": "Central Incisor",
+      "LATERAL_INCISOR": "Lateral Incisor",
+      "CANINE": "Canine",
+      "FIRST_PREMOLAR": "First Premolar",
+      "SECOND_PREMOLAR": "Second Premolar",
+      "FIRST_MOLAR": "First Molar",
+      "SECOND_MOLAR": "Second Molar",
+      "THIRD_MOLAR": "Third Molar"
+    },
     "items": {
       "FILLING": "Filling / Restoration",
       "CROWN": "Crown",

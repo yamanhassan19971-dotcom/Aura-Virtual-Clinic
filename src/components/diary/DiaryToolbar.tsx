@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { addDays, formatLongDate, startOfDay, toDateParam, type TimeScale } from "@/lib/time";
 import { TIME_SCALES } from "@/lib/time";
 import type { Practitioner } from "@prisma/client";
+import { ChevronIcon } from "@/components/shell/icons";
 
 export function DiaryToolbar({
   date,
@@ -59,10 +60,10 @@ export function DiaryToolbar({
         <button
           type="button"
           onClick={() => goTo(addDays(date, -1))}
-          className="rounded-md border border-[var(--color-border)] px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+          className="rounded-md border border-[var(--color-border)] px-2.5 py-1.5 text-gray-600 hover:bg-gray-50"
           aria-label={t("previousDay")}
         >
-          ‹
+          <ChevronIcon className="rtl:rotate-180" width={14} height={14} />
         </button>
         <button
           type="button"
@@ -74,10 +75,10 @@ export function DiaryToolbar({
         <button
           type="button"
           onClick={() => goTo(addDays(date, 1))}
-          className="rounded-md border border-[var(--color-border)] px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+          className="rounded-md border border-[var(--color-border)] px-2.5 py-1.5 text-gray-600 hover:bg-gray-50"
           aria-label={t("nextDay")}
         >
-          ›
+          <ChevronIcon className="rotate-180 rtl:rotate-0" width={14} height={14} />
         </button>
         <input
           type="date"

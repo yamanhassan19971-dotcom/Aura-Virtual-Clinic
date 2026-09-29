@@ -88,6 +88,21 @@ export function SettingsIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// A directional chevron. Unlike the "‹"/"›" text characters, an SVG glyph
+// is never auto-mirrored by the browser's bidi algorithm (Unicode's
+// Bidi_Mirrored property only applies to text characters) — so pairing this
+// with the `rtl:rotate-180` utility on the caller gives full, deliberate
+// control over which way it points in each direction, instead of the glyph
+// silently flipping on its own and cancelling out an already-reversed
+// layout (see DiaryToolbar's previous/next-day buttons).
+export function ChevronIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M15 6l-6 6 6 6" />
+    </Icon>
+  );
+}
+
 export function GlobeIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
