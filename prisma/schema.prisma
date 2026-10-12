@@ -124,6 +124,54 @@ enum BpeSextant {
   LOWER_LEFT
 }
 
+// Phase 4 enums ---------------------------------------------------------
+
+// DRAFT -> PRESENTED -> ACCEPTED -> IN_PROGRESS -> COMPLETED, with DECLINED
+// (patient said no) and CANCELLED (abandoned) as terminal side exits.
+enum TreatmentPlanStatus {
+  DRAFT
+  PRESENTED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+enum TreatmentItemStatus {
+  PLANNED
+  COMPLETED
+  CANCELLED
+}
+
+enum Currency {
+  USD
+  SYP
+}
+
+enum PaymentMethod {
+  CASH
+  SHAM_CASH
+  BANK_TRANSFER
+  OTHER
+}
+
+enum PaymentKind {
+  DEPOSIT
+  PAYMENT
+}
+
+enum RefundChannel {
+  ELECTRONIC
+  IN_PERSON
+}
+
+enum RefundStatus {
+  REQUESTED
+  PAID
+  REJECTED
+}
+
 // A physical clinic location. Every clinical/scheduling record hangs off a
 // practice so Phase 2+ can add more locations without a schema change.
 model Practice {
@@ -147,6 +195,10 @@ model Practice {
   chartEntries          ChartEntry[]
   bpeExams              BpeExam[]
   clinicalImages        ClinicalImage[]
+  treatmentCatalogItems TreatmentCatalogItem[]
+  treatmentPlans        TreatmentPlan[]
+  payments              Payment[]
+  refundRequests        RefundRequest[]
 
   @@map("practices")
 }
@@ -212,6 +264,14 @@ model User {
   bpeExamsCreated        BpeExam[]
   clinicalImagesUploaded ClinicalImage[]
 
+  // Phase 4 back-relations
+  treatmentPlansCreated   TreatmentPlan[]     @relation("PlanCreatedBy")
+  treatmentItemsCompleted TreatmentPlanItem[] @relation("PlanItemCompletedBy")
+  paymentsReceived        Payment[]           @relation("PaymentReceivedBy")
+  paymentsVoided          Payment[]           @relation("PaymentVoidedBy")
+  refundsRequested        RefundRequest[]     @relation("RefundCreatedBy")
+  refundsProcessed        RefundRequest[]     @relation("RefundProcessedBy")
+
   @@index([practiceId])
   @@map("users")
 }
@@ -230,15 +290,16 @@ model Practitioner {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  practice            Practice       @relation(fields: [practiceId], references: [id])
-  user                User?          @relation(fields: [userId], references: [id])
-  defaultRoom         Room?          @relation("DefaultRoom", fields: [defaultRoomId], references: [id])
+  practice            Practice        @relation(fields: [practiceId], references: [id])
+  user                User?           @relation(fields: [userId], references: [id])
+  defaultRoom         Room?           @relation("DefaultRoom", fields: [defaultRoomId], references: [id])
   appointments        Appointment[]
   workingHours        WorkingHours[]
-  preferredByPatients Patient[]      @relation("PreferredPractitioner")
+  preferredByPatients Patient[]       @relation("PreferredPractitioner")
   clinicalNotes       ClinicalNote[]
   chartEntries        ChartEntry[]
   bpeExams            BpeExam[]
+  treatmentPlans      TreatmentPlan[]
 
   @@index([practiceId])
   @@map("practitioners")
@@ -326,6 +387,9 @@ model Patient {
   chartEntries     ChartEntry[]
   bpeExams         BpeExam[]
   clinicalImages   ClinicalImage[]
+  treatmentPlans   TreatmentPlan[]
+  payments         Payment[]
+  refundRequests   RefundRequest[]
 
   @@index([practiceId])
   @@index([lastName, firstName])
@@ -776,6 +840,177 @@ model ClinicalImage {
 
   @@index([patientId])
   @@map("clinical_images")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4: treatment plans, payments, refunds
+//
+// Money is stored as integers to avoid floating-point drift and Decimal
+// serialization through server actions: USD amounts in cents, SYP in whole
+// pounds. Every payment also stores its USD-cents equivalent (amountUsdCents)
+// so plan balances are always computed in one currency.
+// ---------------------------------------------------------------------------
+
+// The clinic's price list. Plan items copy name/price at the time they are
+// added, so editing a price here never changes an existing plan.
+model TreatmentCatalogItem {
+  id         String  @id @default(cuid())
+  practiceId String  @map("practice_id")
+  code       String
+  nameEn     String  @map("name_en")
+  nameAr     String  @map("name_ar")
+  category   String
+  priceCents Int     @map("price_cents")
+  priceNote  String? @map("price_note")
+  active     Boolean @default(true)
+  sortOrder  Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice  Practice            @relation(fields: [practiceId], references: [id])
+  planItems TreatmentPlanItem[]
+
+  @@unique([practiceId, code])
+  @@map("treatment_catalog_items")
+}
+
+model TreatmentPlan {
+  id             String              @id @default(cuid())
+  practiceId     String              @map("practice_id")
+  patientId      String              @map("patient_id")
+  practitionerId String?             @map("practitioner_id")
+  planNumber     String              @unique @map("plan_number")
+  title          String
+  status         TreatmentPlanStatus @default(DRAFT)
+  notes          String?
+  discountCents  Int                 @default(0) @map("discount_cents")
+
+  // Staged payment split (AURA default 50/30/20). Must sum to 100.
+  stage1Percent Int @default(50) @map("stage1_percent")
+  stage2Percent Int @default(30) @map("stage2_percent")
+  stage3Percent Int @default(20) @map("stage3_percent")
+
+  presentedAt  DateTime? @map("presented_at")
+  acceptedAt   DateTime? @map("accepted_at")
+  declinedAt   DateTime? @map("declined_at")
+  completedAt  DateTime? @map("completed_at")
+  cancelledAt  DateTime? @map("cancelled_at")
+  statusReason String?   @map("status_reason")
+
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  practice       Practice            @relation(fields: [practiceId], references: [id])
+  patient        Patient             @relation(fields: [patientId], references: [id])
+  practitioner   Practitioner?       @relation(fields: [practitionerId], references: [id])
+  createdBy      User?               @relation("PlanCreatedBy", fields: [createdById], references: [id])
+  items          TreatmentPlanItem[]
+  payments       Payment[]
+  refundRequests RefundRequest[]
+
+  @@index([practiceId, status])
+  @@index([patientId])
+  @@map("treatment_plans")
+}
+
+model TreatmentPlanItem {
+  id             String              @id @default(cuid())
+  planId         String              @map("plan_id")
+  catalogItemId  String?             @map("catalog_item_id")
+  description    String
+  teeth          String? // free text FDI list, e.g. "11, 21"
+  quantity       Int                 @default(1)
+  unitPriceCents Int                 @map("unit_price_cents")
+  status         TreatmentItemStatus @default(PLANNED)
+  sortOrder      Int                 @default(0) @map("sort_order")
+  completedAt    DateTime?           @map("completed_at")
+  completedById  String?             @map("completed_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  plan        TreatmentPlan         @relation(fields: [planId], references: [id])
+  catalogItem TreatmentCatalogItem? @relation(fields: [catalogItemId], references: [id])
+  completedBy User?                 @relation("PlanItemCompletedBy", fields: [completedById], references: [id])
+
+  @@index([planId])
+  @@map("treatment_plan_items")
+}
+
+// Payments are never deleted or edited; a mistake is voided (with a reason)
+// and re-entered, so the receipt sequence stays intact.
+model Payment {
+  id             String        @id @default(cuid())
+  practiceId     String        @map("practice_id")
+  patientId      String        @map("patient_id")
+  planId         String?       @map("plan_id")
+  receiptNumber  String        @unique @map("receipt_number")
+  kind           PaymentKind
+  method         PaymentMethod
+  currency       Currency
+  amount         Int // USD cents or whole SYP, per `currency`
+  exchangeRate   Int?          @map("exchange_rate") // SYP per 1 USD, required for SYP
+  amountUsdCents Int           @map("amount_usd_cents")
+  receivedAt     DateTime      @default(now()) @map("received_at")
+  note           String?
+
+  receivedById String?   @map("received_by")
+  voidedAt     DateTime? @map("voided_at")
+  voidedById   String?   @map("voided_by")
+  voidReason   String?   @map("void_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  practice   Practice        @relation(fields: [practiceId], references: [id])
+  patient    Patient         @relation(fields: [patientId], references: [id])
+  plan       TreatmentPlan?  @relation(fields: [planId], references: [id])
+  receivedBy User?           @relation("PaymentReceivedBy", fields: [receivedById], references: [id])
+  voidedBy   User?           @relation("PaymentVoidedBy", fields: [voidedById], references: [id])
+  refunds    RefundRequest[]
+
+  @@index([patientId])
+  @@index([planId])
+  @@index([practiceId, receivedAt])
+  @@map("payments")
+}
+
+// AURA policy: a patient who changes their mind submits a refund request.
+// Electronic requests are processed within 3 working days; in person, on the
+// spot or within 3 working days if cash isn't available. dueBy tracks that.
+model RefundRequest {
+  id             String         @id @default(cuid())
+  practiceId     String         @map("practice_id")
+  patientId      String         @map("patient_id")
+  planId         String?        @map("plan_id")
+  paymentId      String?        @map("payment_id")
+  amountUsdCents Int            @map("amount_usd_cents")
+  channel        RefundChannel
+  status         RefundStatus   @default(REQUESTED)
+  reason         String?
+  requestedAt    DateTime       @default(now()) @map("requested_at")
+  dueBy          DateTime       @map("due_by")
+  processedAt    DateTime?      @map("processed_at")
+  method         PaymentMethod?
+  processNote    String?        @map("process_note")
+
+  createdById   String? @map("created_by")
+  processedById String? @map("processed_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  practice    Practice       @relation(fields: [practiceId], references: [id])
+  patient     Patient        @relation(fields: [patientId], references: [id])
+  plan        TreatmentPlan? @relation(fields: [planId], references: [id])
+  payment     Payment?       @relation(fields: [paymentId], references: [id])
+  createdBy   User?          @relation("RefundCreatedBy", fields: [createdById], references: [id])
+  processedBy User?          @relation("RefundProcessedBy", fields: [processedById], references: [id])
+
+  @@index([patientId])
+  @@index([practiceId, status])
+  @@map("refund_requests")
 }
 
 model AuditLog {

@@ -46,3 +46,17 @@ export class RecordLockedError extends Error {
     this.name = "RecordLockedError";
   }
 }
+
+/**
+ * A clinic business rule was broken (deposit over 5%, editing an accepted
+ * plan, overpaying...). `code` is a stable key the UI translates under
+ * `billing.errors.*`; `message` is the English fallback.
+ */
+export class BusinessRuleError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "BusinessRuleError";
+    this.code = code;
+  }
+}
