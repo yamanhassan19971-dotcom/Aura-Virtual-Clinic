@@ -67,8 +67,8 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
                 <td className="py-2">{item.description}</td>
                 <td className="py-2">{item.teeth}</td>
                 <td className="py-2 text-end">{item.quantity}</td>
-                <td className="py-2 text-end">{formatUsd(item.unitPriceCents, locale)}</td>
-                <td className="py-2 text-end">{formatUsd(item.quantity * item.unitPriceCents, locale)}</td>
+                <td className="py-2 text-end">{formatUsd(item.unitPriceCents)}</td>
+                <td className="py-2 text-end">{formatUsd(item.quantity * item.unitPriceCents)}</td>
               </tr>
             ))}
           </tbody>
@@ -79,13 +79,13 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
                   <td colSpan={4} className="pt-3 text-end text-gray-500">
                     {t("plans.subtotal")}
                   </td>
-                  <td className="pt-3 text-end">{formatUsd(planSubtotalCents(plan.items), locale)}</td>
+                  <td className="pt-3 text-end">{formatUsd(planSubtotalCents(plan.items))}</td>
                 </tr>
                 <tr>
                   <td colSpan={4} className="text-end text-gray-500">
                     {t("plans.discount")}
                   </td>
-                  <td className="text-end">−{formatUsd(plan.discountCents, locale)}</td>
+                  <td className="text-end">−{formatUsd(plan.discountCents)}</td>
                 </tr>
               </>
             )}
@@ -93,7 +93,7 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
               <td colSpan={4} className="pt-2 text-end font-bold">
                 {t("plans.total")}
               </td>
-              <td className="pt-2 text-end text-base font-bold">{formatUsd(plan.balance.totalCents, locale)}</td>
+              <td className="pt-2 text-end text-base font-bold">{formatUsd(plan.balance.totalCents)}</td>
             </tr>
           </tfoot>
         </table>
@@ -106,7 +106,7 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
                 <p className="text-xs text-gray-500">
                   {t("plans.stage", { n: s.stage })} · {s.percent}%
                 </p>
-                <p className="text-base font-semibold">{formatUsd(s.dueCents, locale)}</p>
+                <p className="text-base font-semibold">{formatUsd(s.dueCents)}</p>
               </div>
             ))}
           </div>

@@ -9,6 +9,11 @@ const prisma = new PrismaClient();
 // so tests never depend on fragile pre-seeded appointment IDs.
 async function main() {
   await prisma.auditLog.deleteMany();
+  await prisma.refundRequest.deleteMany();
+  await prisma.payment.deleteMany();
+  await prisma.treatmentPlanItem.deleteMany();
+  await prisma.treatmentPlan.deleteMany();
+  await prisma.treatmentCatalogItem.deleteMany();
 
   // Phase 2 tables reference Patient (and some optionally reference
   // Appointment) — clear them first, children before parents, or the
@@ -130,6 +135,17 @@ async function main() {
     },
   });
   void drAhmad;
+
+  await prisma.treatmentCatalogItem.create({
+    data: {
+      practiceId: practice.id,
+      code: "IMPLANT_ROOT",
+      nameEn: "Root implant",
+      nameAr: "زرعة Root",
+      category: "Implants",
+      priceCents: 20_000,
+    },
+  });
 
   console.log("E2E fixture seeded.");
 }

@@ -26,7 +26,6 @@ function payablePlans(account: Account) {
 
 function RecordPaymentModal({ patientId, account, onClose }: { patientId: string; account: Account; onClose: () => void }) {
   const t = useTranslations("billing.account");
-  const locale = useLocale();
   const { run, pending } = useBillingAction();
   const plans = payablePlans(account);
   const [planId, setPlanId] = useState(plans.find((p) => p.balance.balanceCents > 0)?.id ?? "");
@@ -69,7 +68,7 @@ function RecordPaymentModal({ patientId, account, onClose }: { patientId: string
             <option value="">{t("noPlan")}</option>
             {plans.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.planNumber} · {p.title} · {formatUsd(p.balance.balanceCents, locale)}
+                {p.planNumber} · {p.title} · {formatUsd(p.balance.balanceCents)}
               </option>
             ))}
           </select>
@@ -97,7 +96,7 @@ function RecordPaymentModal({ patientId, account, onClose }: { patientId: string
         </div>
         {kind === "DEPOSIT" && plan && (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            {t("depositHint", { max: formatUsd(maxDepositCents(plan.balance.totalCents) - plan.depositCents, locale) })}
+            {t("depositHint", { max: formatUsd(maxDepositCents(plan.balance.totalCents) - plan.depositCents) })}
           </p>
         )}
         <div className="grid grid-cols-3 gap-3">
@@ -129,7 +128,7 @@ function RecordPaymentModal({ patientId, account, onClose }: { patientId: string
         </div>
         {usdPreview !== null && (
           <p className="text-xs text-gray-500">
-            {t("usdEquivalent")}: <span className="font-semibold">{formatUsd(usdPreview, locale)}</span>
+            {t("usdEquivalent")}: <span className="font-semibold">{formatUsd(usdPreview)}</span>
           </p>
         )}
         <label className={labelClass}>
@@ -148,7 +147,6 @@ function RecordPaymentModal({ patientId, account, onClose }: { patientId: string
 
 function RefundModal({ patientId, account, onClose }: { patientId: string; account: Account; onClose: () => void }) {
   const t = useTranslations("billing.account");
-  const locale = useLocale();
   const { run, pending } = useBillingAction();
   const plansWithMoney = account.plans.filter((p) => p.balance.netPaidCents > 0);
   const [planId, setPlanId] = useState(plansWithMoney[0]?.id ?? "");
@@ -180,7 +178,7 @@ function RefundModal({ patientId, account, onClose }: { patientId: string; accou
             <option value="">{t("noPlan")}</option>
             {plansWithMoney.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.planNumber} · {p.title} · {t("paid")} {formatUsd(p.balance.netPaidCents, locale)}
+                {p.planNumber} · {p.title} · {t("paid")} {formatUsd(p.balance.netPaidCents)}
               </option>
             ))}
           </select>
@@ -259,14 +257,14 @@ export function AccountPanel({
   return (
     <div className="flex flex-col gap-5 p-6">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <SummaryTile label={t("billed")} value={formatUsd(summary.billedCents, locale)} />
-        <SummaryTile label={t("paid")} value={formatUsd(summary.paidCents - summary.refundedCents, locale)} />
+        <SummaryTile label={t("billed")} value={formatUsd(summary.billedCents)} />
+        <SummaryTile label={t("paid")} value={formatUsd(summary.paidCents - summary.refundedCents)} />
         <SummaryTile
           label={summary.balanceCents < 0 ? t("inCredit") : t("balance")}
-          value={formatUsd(Math.abs(summary.balanceCents), locale)}
+          value={formatUsd(Math.abs(summary.balanceCents))}
           tone={summary.balanceCents > 0 ? "warn" : "good"}
         />
-        <SummaryTile label={t("pendingRefunds")} value={formatUsd(summary.pendingRefundCents, locale)} />
+        <SummaryTile label={t("pendingRefunds")} value={formatUsd(summary.pendingRefundCents)} />
       </div>
 
       <section className="flex flex-col gap-2">
@@ -304,7 +302,7 @@ export function AccountPanel({
                     <td className="px-3 py-2">{t(`methodValue.${p.method}`)}</td>
                     <td className={`px-3 py-2 text-end ${p.voidedAt ? "line-through" : "font-medium"}`}>
                       {formatAmount(p.amount, p.currency, locale)}
-                      {p.currency === "SYP" && <span className="block text-xs text-gray-400">{formatUsd(p.amountUsdCents, locale)}</span>}
+                      {p.currency === "SYP" && <span className="block text-xs text-gray-400">{formatUsd(p.amountUsdCents)}</span>}
                     </td>
                     <td className="px-3 py-2 text-end whitespace-nowrap text-xs">
                       {p.voidedAt ? (
@@ -360,7 +358,7 @@ export function AccountPanel({
                 <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--color-border)] bg-white p-3 text-sm">
                   <div>
                     <p className="font-medium">
-                      {formatUsd(r.amountUsdCents, locale)} · {t(`refundStatus.${r.status}`)}
+                      {formatUsd(r.amountUsdCents)} · {t(`refundStatus.${r.status}`)}
                       {r.overdue && <span className="ms-2 rounded bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700">{t("overdue")}</span>}
                     </p>
                     <p className="text-xs text-gray-500">

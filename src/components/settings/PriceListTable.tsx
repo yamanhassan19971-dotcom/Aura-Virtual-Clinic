@@ -98,7 +98,7 @@ export function PriceListTable({ items: initial, canManage }: { items: Treatment
                           className={`${inputClass} w-28`}
                         />
                       ) : (
-                        formatUsd(item.priceCents, locale)
+                        formatUsd(item.priceCents)
                       )}
                     </td>
                     <td className="px-4 py-2">

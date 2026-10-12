@@ -120,17 +120,22 @@ export function refundDueBy(requestedAt: Date): Date {
   return addWorkingDays(requestedAt, REFUND_WORKING_DAYS);
 }
 
-export function formatUsd(cents: number, locale: string): string {
-  return new Intl.NumberFormat(locale.startsWith("ar") ? "ar-SY-u-nu-latn" : "en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+/**
+ * "$1,250" in both languages: Latin digits and a leading "$" read the same
+ * on Arabic and English screens (Intl's ar locale renders "US$" oddly).
+ */
+export function formatUsd(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  const n = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: abs % 100 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
-  }).format(cents / 100);
+  }).format(abs / 100);
+  return `${sign}$${n}`;
 }
 
 export function formatAmount(amount: number, currency: Currency, locale: string): string {
-  if (currency === "USD") return formatUsd(amount, locale);
-  const n = new Intl.NumberFormat(locale.startsWith("ar") ? "ar-SY-u-nu-latn" : "en-US").format(amount);
+  if (currency === "USD") return formatUsd(amount);
+  const n = new Intl.NumberFormat("en-US").format(amount);
   return locale.startsWith("ar") ? `${n} ل.س` : `${n} SYP`;
 }

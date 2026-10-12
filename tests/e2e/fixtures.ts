@@ -16,6 +16,11 @@ export const test = base.extend({
     await prisma.bpeSextantScore.deleteMany();
     await prisma.bpeExam.deleteMany();
     await prisma.chartEntry.deleteMany();
+    // Phase 4: plans and payments, for the same reason.
+    await prisma.refundRequest.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.treatmentPlanItem.deleteMany();
+    await prisma.treatmentPlan.deleteMany();
     await use(page);
   },
 });

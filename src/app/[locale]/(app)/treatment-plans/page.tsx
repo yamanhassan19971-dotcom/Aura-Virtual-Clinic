@@ -83,9 +83,9 @@ export default async function TreatmentPlansPage({ searchParams }: { searchParam
                     </td>
                     <td className="px-4 py-2.5 text-gray-600">{plan.practitioner?.name ?? "—"}</td>
                     <td className="px-4 py-2.5 text-gray-600">{formatLongDate(plan.updatedAt, locale)}</td>
-                    <td className="px-4 py-2.5 text-end font-medium">{formatUsd(plan.balance.totalCents, locale)}</td>
+                    <td className="px-4 py-2.5 text-end font-medium">{formatUsd(plan.balance.totalCents)}</td>
                     <td className="px-4 py-2.5 text-end">
-                      {planIsBillable(plan.status) ? formatUsd(plan.balance.balanceCents, locale) : "—"}
+                      {planIsBillable(plan.status) ? formatUsd(plan.balance.balanceCents) : "—"}
                     </td>
                   </tr>
                 ))}

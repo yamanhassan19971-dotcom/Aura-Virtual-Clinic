@@ -16,14 +16,14 @@ export function useBillingAction() {
   const router = useRouter();
   const toast = useToast();
   const tErrors = useTranslations("billing.errors");
-  const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [pending, startTransition] = useTransition();
 
   async function run<T>(action: () => Promise<ActionResult<T>>, opts: { success?: string } = {}): Promise<T | null> {
     const result = await action();
     if (result.ok) {
       startTransition(() => router.refresh());
-      toast.show(opts.success ?? tCommon("save"), { tone: "success" });
+      toast.show(opts.success ?? tSettings("saved"), { tone: "success" });
       return result.data;
     }
     const message = result.code && tErrors.has(result.code) ? tErrors(result.code) : result.message;

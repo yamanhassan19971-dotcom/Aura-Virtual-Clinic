@@ -36,7 +36,23 @@ Open http://localhost:3000 — you'll be redirected to `/en/login`.
 | `admin@aura.dev` | Admin |
 | `manager@aura.dev` | Practice Manager |
 | `reception@aura.dev` | Receptionist |
-| `yaman@aura.dev` (and `ahmad@`, `sara@`, `omar@`, `lina@aura.dev`) | Clinician |
+| `yaman@aura.dev` (and `wajih@`, `amr@`, `adham@`, `abeer@aura.dev`) | Clinician |
+
+The demo seed uses AURA's real doctors, opening hours (10:00-20:00, Friday
+closed), appointment types and price list (`prisma/aura-clinic-data.ts`), with
+made-up patients and six sample treatment plans.
+
+### Going live at the clinic
+
+For the real clinic database, skip `db:seed` and run:
+
+```bash
+npm run db:migrate
+npm run db:setup-clinic   # AURA practice, doctors, hours, price list, staff logins; NO demo patients
+```
+
+It prints each new staff account's one-time password once. Re-running it is
+safe: existing accounts and prices edited in Settings are left alone.
 
 ## Testing
 

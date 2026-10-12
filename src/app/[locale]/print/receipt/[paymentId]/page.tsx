@@ -42,7 +42,7 @@ export default async function PrintReceiptPage({ params }: { params: Promise<{ l
         <div className="rounded-md bg-gray-50 p-4 text-center">
           <p className="text-xs text-gray-500">{t("account.amount")}</p>
           <p className="text-2xl font-bold text-[var(--color-navy)]">{formatAmount(payment.amount, payment.currency, locale)}</p>
-          {payment.currency === "SYP" && <p className="text-sm text-gray-500">{formatUsd(payment.amountUsdCents, locale)}</p>}
+          {payment.currency === "SYP" && <p className="text-sm text-gray-500">{formatUsd(payment.amountUsdCents)}</p>}
         </div>
         {payment.note && <p className="text-sm text-gray-600">{payment.note}</p>}
         <p className="mt-6 text-center text-sm text-gray-500">{t("print.thankYou")}</p>

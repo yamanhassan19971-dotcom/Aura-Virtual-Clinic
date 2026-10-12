@@ -92,7 +92,7 @@ function AddItemForm({ planId, catalog }: { planId: string; catalog: TreatmentCa
                 .filter((c) => c.category === category)
                 .map((c) => (
                   <option key={c.id} value={c.id}>
-                    {locale === "ar" ? c.nameAr : c.nameEn} · {formatUsd(c.priceCents, locale)}
+                    {locale === "ar" ? c.nameAr : c.nameEn} · {formatUsd(c.priceCents)}
                   </option>
                 ))}
             </optgroup>
@@ -252,13 +252,13 @@ export function PlanCard({
         <span className="flex items-center gap-4 text-sm">
           <span>
             <span className="text-xs text-gray-400">{t("total")} </span>
-            <span className="font-semibold">{formatUsd(plan.balance.totalCents, locale)}</span>
+            <span className="font-semibold">{formatUsd(plan.balance.totalCents)}</span>
           </span>
           {billable && (
             <span>
               <span className="text-xs text-gray-400">{t("balance")} </span>
               <span className={`font-semibold ${plan.balance.balanceCents > 0 ? "text-amber-700" : "text-green-700"}`}>
-                {formatUsd(plan.balance.balanceCents, locale)}
+                {formatUsd(plan.balance.balanceCents)}
               </span>
             </span>
           )}
@@ -341,8 +341,8 @@ export function PlanCard({
                     </td>
                     <td className="px-2 py-2 text-gray-600">{item.teeth}</td>
                     <td className="px-2 py-2 text-end">{item.quantity}</td>
-                    <td className="px-2 py-2 text-end">{formatUsd(item.unitPriceCents, locale)}</td>
-                    <td className="px-2 py-2 text-end font-medium">{formatUsd(item.quantity * item.unitPriceCents, locale)}</td>
+                    <td className="px-2 py-2 text-end">{formatUsd(item.unitPriceCents)}</td>
+                    <td className="px-2 py-2 text-end font-medium">{formatUsd(item.quantity * item.unitPriceCents)}</td>
                     <td className="px-2 py-2 text-end whitespace-nowrap">
                       {permissions.canManage && editable && (
                         <button
@@ -386,29 +386,29 @@ export function PlanCard({
           <div className="grid gap-4 md:grid-cols-2">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <dt className="text-gray-500">{t("subtotal")}</dt>
-              <dd className="text-end">{formatUsd(subtotal, locale)}</dd>
+              <dd className="text-end">{formatUsd(subtotal)}</dd>
               {plan.discountCents > 0 && (
                 <>
                   <dt className="text-gray-500">{t("discount")}</dt>
-                  <dd className="text-end">−{formatUsd(plan.discountCents, locale)}</dd>
+                  <dd className="text-end">−{formatUsd(plan.discountCents)}</dd>
                 </>
               )}
               <dt className="font-semibold">{t("total")}</dt>
-              <dd className="text-end font-semibold">{formatUsd(plan.balance.totalCents, locale)}</dd>
+              <dd className="text-end font-semibold">{formatUsd(plan.balance.totalCents)}</dd>
               <dt className="text-gray-500">{t("maxDeposit")}</dt>
-              <dd className="text-end text-gray-500">{formatUsd(maxDepositCents(plan.balance.totalCents), locale)}</dd>
+              <dd className="text-end text-gray-500">{formatUsd(maxDepositCents(plan.balance.totalCents))}</dd>
               {billable && (
                 <>
                   <dt className="text-gray-500">{t("paid")}</dt>
-                  <dd className="text-end">{formatUsd(plan.balance.paidCents, locale)}</dd>
+                  <dd className="text-end">{formatUsd(plan.balance.paidCents)}</dd>
                   {plan.balance.refundedCents > 0 && (
                     <>
                       <dt className="text-gray-500">{t("refunded")}</dt>
-                      <dd className="text-end">−{formatUsd(plan.balance.refundedCents, locale)}</dd>
+                      <dd className="text-end">−{formatUsd(plan.balance.refundedCents)}</dd>
                     </>
                   )}
                   <dt className="font-semibold">{t("balance")}</dt>
-                  <dd className="text-end font-semibold">{formatUsd(plan.balance.balanceCents, locale)}</dd>
+                  <dd className="text-end font-semibold">{formatUsd(plan.balance.balanceCents)}</dd>
                 </>
               )}
             </dl>
@@ -429,12 +429,12 @@ export function PlanCard({
                       <td className="py-1.5">
                         {t("stage", { n: stage.stage })} <span className="text-xs text-gray-400">({stage.percent}%)</span>
                       </td>
-                      <td className="py-1.5 text-end">{formatUsd(stage.dueCents, locale)}</td>
+                      <td className="py-1.5 text-end">{formatUsd(stage.dueCents)}</td>
                       {billable && (
                         <td
                           className={`py-1.5 text-end text-xs ${stage.remainingCents === 0 ? "text-green-700" : "text-amber-700"}`}
                         >
-                          {stage.remainingCents === 0 ? "✓" : `${t("remaining")} ${formatUsd(stage.remainingCents, locale)}`}
+                          {stage.remainingCents === 0 ? "✓" : `${t("remaining")} ${formatUsd(stage.remainingCents)}`}
                         </td>
                       )}
                     </tr>
