@@ -264,13 +264,12 @@ export async function removePlanItem(actor: Actor, rawInput: unknown) {
     if (!item) throw new NotFoundError("Plan item not found");
     assertEditable(item.plan.status);
     await tx.treatmentPlanItem.delete({ where: { id: item.id } });
-    const { plan: _plan, ...itemRow } = item;
     await writeAudit(tx, {
       userId: actor.id,
       action: "plan.itemRemoved",
       recordType: "TreatmentPlanItem",
       recordId: item.id,
-      previousValue: serialize(itemRow),
+      previousValue: serialize({ ...item, plan: undefined }),
       newValue: null,
     });
     return { id: item.id };

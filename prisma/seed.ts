@@ -15,10 +15,21 @@ import {
   type Patient,
 } from "@prisma/client";
 import argon2 from "argon2";
+import * as billing from "../src/lib/services/billing-service";
 import { saveDocumentFile } from "../src/lib/documents/storage";
 import { MEDICAL_QUESTIONS } from "../src/lib/medical/question-catalog";
 import { PATIENT_FLAG_KEYS } from "../src/lib/patients/flag-catalog";
 import { encodeReason } from "../src/lib/services/codec";
+import {
+  AURA_APPOINTMENT_TYPES,
+  AURA_CLOSE_MINUTE,
+  AURA_OPEN_MINUTE,
+  AURA_OPEN_WEEKDAYS,
+  AURA_PRACTICE,
+  AURA_PRACTITIONERS,
+  AURA_PRICE_LIST,
+  AURA_ROOMS,
+} from "./aura-clinic-data";
 
 const prisma = new PrismaClient();
 
@@ -38,28 +49,10 @@ const LAST_NAMES = [
   "Zein", "Sultan", "Barakat", "Najjar", "Ghanem", "Attar", "Suleiman",
 ];
 
-const APPOINTMENT_TYPES: Array<{ name: string; minutes: number; color: string }> = [
-  { name: "Examination", minutes: 30, color: "#3B82F6" },
-  { name: "Emergency", minutes: 30, color: "#DC2626" },
-  { name: "Hygiene", minutes: 45, color: "#0EA5E9" },
-  { name: "Composite", minutes: 30, color: "#8B5CF6" },
-  { name: "Crown", minutes: 60, color: "#B45309" },
-  { name: "Bridge", minutes: 90, color: "#92400E" },
-  { name: "Root Canal", minutes: 90, color: "#BE123C" },
-  { name: "Extraction", minutes: 45, color: "#7C2D12" },
-  { name: "Consultation", minutes: 20, color: "#0F766E" },
-  { name: "Follow-up", minutes: 15, color: "#4B5563" },
-  { name: "Whitening", minutes: 60, color: "#CA8A04" },
-  { name: "Other", minutes: 30, color: "#6B7280" },
-];
+const APPOINTMENT_TYPES = AURA_APPOINTMENT_TYPES;
 
-const PRACTITIONERS = [
-  { name: "Dr Yaman Hassan", title: "Dentist", color: "#0F2747", email: "yaman@aura.dev" },
-  { name: "Dr Ahmad", title: "Dentist", color: "#1D4ED8", email: "ahmad@aura.dev" },
-  { name: "Dr Sara", title: "Dentist", color: "#7C3AED", email: "sara@aura.dev" },
-  { name: "Dr Omar", title: "Dentist", color: "#0F766E", email: "omar@aura.dev" },
-  { name: "Hygienist Lina", title: "Hygienist", color: "#B45309", email: "lina@aura.dev" },
-];
+// AURA's real doctors; demo logins are <key>@aura.dev (e.g. yaman@aura.dev).
+const PRACTITIONERS = AURA_PRACTITIONERS.map((p) => ({ ...p, email: `${p.key}@aura.dev` }));
 
 function randInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -81,21 +74,17 @@ async function main() {
   console.log("Seeding AURA demo data...");
 
   const practice = await prisma.practice.upsert({
-    where: { id: "practice-damascus-main" },
+    where: { id: AURA_PRACTICE.id },
     update: {},
-    create: {
-      id: "practice-damascus-main",
-      name: "Damascus Main Clinic",
-      timezone: "Asia/Damascus",
-    },
+    create: AURA_PRACTICE,
   });
 
   const rooms = await Promise.all(
-    [1, 2, 3, 4].map((n) =>
+    AURA_ROOMS.map((name, i) =>
       prisma.room.upsert({
-        where: { id: `room-surgery-${n}` },
+        where: { id: `room-surgery-${i + 1}` },
         update: {},
-        create: { id: `room-surgery-${n}`, practiceId: practice.id, name: `Surgery ${n}` },
+        create: { id: `room-surgery-${i + 1}`, practiceId: practice.id, name },
       })
     )
   );
@@ -167,11 +156,11 @@ async function main() {
     practitioners.push(practitioner);
   }
 
-  // Practice-wide working hours: Monday-Friday 08:00-18:00.
+  // Practice-wide working hours: AURA is open 10:00-20:00, closed Friday.
   await prisma.workingHours.deleteMany({ where: { practiceId: practice.id, practitionerId: null } });
-  for (const weekday of [1, 2, 3, 4, 5]) {
+  for (const weekday of AURA_OPEN_WEEKDAYS) {
     await prisma.workingHours.create({
-      data: { practiceId: practice.id, weekday, startMinute: 8 * 60, endMinute: 18 * 60 },
+      data: { practiceId: practice.id, weekday, startMinute: AURA_OPEN_MINUTE, endMinute: AURA_CLOSE_MINUTE },
     });
   }
 
@@ -258,6 +247,11 @@ async function main() {
   }
 
   await prisma.auditLog.deleteMany({ where: {} });
+  // Phase 4 billing rows reference patients/plans; cleared before re-seeding.
+  await prisma.refundRequest.deleteMany({ where: {} });
+  await prisma.payment.deleteMany({ where: {} });
+  await prisma.treatmentPlanItem.deleteMany({ where: {} });
+  await prisma.treatmentPlan.deleteMany({ where: {} });
 
   // Phase 2 records are regenerated fresh on every seed run — clear them
   // (children before parents, and before appointments are wiped below,
@@ -296,7 +290,7 @@ async function main() {
   // the real time the seed script happens to run at.
   const now = new Date();
   const anchorMinutes = now.getHours() * 60 + now.getMinutes();
-  const nowAnchor = anchorMinutes >= 8 * 60 && anchorMinutes <= 17 * 60 ? anchorMinutes : 12 * 60 + 30;
+  const nowAnchor = anchorMinutes >= AURA_OPEN_MINUTE && anchorMinutes <= AURA_CLOSE_MINUTE - 60 ? anchorMinutes : 13 * 60 + 30;
 
   let patientCursor = 0;
   function nextPatient() {
@@ -328,10 +322,10 @@ async function main() {
   async function createDayAppointments(day: Date, opts: { count: number; bias: "past" | "today" | "future" }) {
     for (const practitioner of practitioners) {
       const room = rooms.find((r) => r.id === practitioner.defaultRoomId) ?? rooms[0];
-      let cursorMinute = 8 * 60 + randInt(0, 30);
+      let cursorMinute = AURA_OPEN_MINUTE + randInt(0, 30);
       const perPractitioner = Math.ceil(opts.count / practitioners.length);
       for (let i = 0; i < perPractitioner; i++) {
-        if (cursorMinute > 17 * 60) break;
+        if (cursorMinute > AURA_CLOSE_MINUTE - 60) break;
         // Occasionally skip a slot to leave a visible gap in the diary.
         if (Math.random() < 0.18) {
           cursorMinute += 30;
@@ -339,7 +333,7 @@ async function main() {
         }
         const type = pick(appointmentTypes);
         const duration = type.defaultDurationMin;
-        if (cursorMinute + duration > 18 * 60) break;
+        if (cursorMinute + duration > AURA_CLOSE_MINUTE) break;
 
         const startTime = dateAt(day, Math.floor(cursorMinute / 60), cursorMinute % 60);
         const endTime = new Date(startTime.getTime() + duration * 60000);
@@ -1031,6 +1025,120 @@ async function main() {
     clinicalImageCount++;
   }
 
+
+  // ---------------------------------------------------------------------------
+  // Phase 4: AURA price list + a handful of demo treatment plans, created
+  // through the real billing service so every business rule and audit row
+  // applies exactly as it would at the front desk.
+  // ---------------------------------------------------------------------------
+  for (let i = 0; i < AURA_PRICE_LIST.length; i++) {
+    const item = AURA_PRICE_LIST[i];
+    const data = {
+      practiceId: practice.id,
+      code: item.code,
+      nameEn: item.nameEn,
+      nameAr: item.nameAr,
+      category: item.category,
+      priceCents: item.priceUsd * 100,
+      priceNote: item.priceNote ?? null,
+      sortOrder: i,
+    };
+    await prisma.treatmentCatalogItem.upsert({
+      where: { practiceId_code: { practiceId: practice.id, code: item.code } },
+      update: data,
+      create: data,
+    });
+  }
+  const catalog = await prisma.treatmentCatalogItem.findMany({ where: { practiceId: practice.id } });
+  const priceOf = (code: string) => catalog.find((c) => c.code === code)!;
+
+  const receptionUser = await prisma.user.findUniqueOrThrow({ where: { email: "reception@aura.dev" } });
+  const clinicianActor = (practitioner: Practitioner) => ({
+    id: practitioner.userId!,
+    role: Role.CLINICIAN,
+    practiceId: practice.id,
+    practitionerId: practitioner.id,
+  });
+  const receptionActor = { id: receptionUser.id, role: Role.RECEPTIONIST, practiceId: practice.id, practitionerId: null };
+  const [drYaman, drWajih, drAmr] = practitioners;
+
+  async function demoPlan(
+    patient: Patient,
+    doctor: Practitioner,
+    title: string,
+    items: Array<{ code: string; quantity?: number; teeth?: string; unitPriceUsd?: number }>
+  ) {
+    const plan = await billing.createPlan(clinicianActor(doctor), { patientId: patient.id, title, practitionerId: doctor.id });
+    for (const item of items) {
+      const catalogItem = priceOf(item.code);
+      await billing.addPlanItem(clinicianActor(doctor), {
+        planId: plan.id,
+        catalogItemId: catalogItem.id,
+        description: catalogItem.nameAr,
+        teeth: item.teeth ?? null,
+        quantity: item.quantity ?? 1,
+        unitPriceCents: (item.unitPriceUsd ?? catalogItem.priceCents / 100) * 100,
+      });
+    }
+    await billing.changePlanStatus(clinicianActor(doctor), { planId: plan.id, action: "present" });
+    return plan;
+  }
+
+  // Awaiting the patient's decision (the follow-up call list).
+  await demoPlan(patients[0], drWajih, "زرعتين Root مع تاجين", [
+    { code: "IMPLANT_ROOT", quantity: 2, teeth: "36, 46" },
+    { code: "IMPLANT_CROWN", quantity: 2, teeth: "36, 46" },
+  ]);
+  await demoPlan(patients[1], drYaman, "ابتسامة 4D الفكين", [{ code: "4D_ROOT4_BOTH" }]);
+
+  // Accepted: deposit taken, then stage 1 (50%) paid.
+  const fourD = await demoPlan(patients[2], drWajih, "ابتسامة 4D الفك العلوي", [{ code: "4D_SGS4_JAW" }]);
+  await billing.changePlanStatus(receptionActor, { planId: fourD.id, action: "accept" });
+  const fourDBase = { patientId: patients[2].id, planId: fourD.id, currency: "USD" as const };
+  await billing.recordPayment(receptionActor, { ...fourDBase, kind: "DEPOSIT", method: "CASH", amount: 9_000 });
+  await billing.recordPayment(receptionActor, { ...fourDBase, kind: "PAYMENT", method: "SHAM_CASH", amount: 86_000 });
+
+  // Orthodontics started with a $50 first payment, taken in SYP.
+  const ortho = await demoPlan(patients[3], drAmr, "تقويم معدني", [{ code: "ORTHO_METAL", unitPriceUsd: 800 }]);
+  await billing.changePlanStatus(receptionActor, { planId: ortho.id, action: "accept" });
+  await billing.recordPayment(receptionActor, {
+    patientId: patients[3].id,
+    planId: ortho.id,
+    kind: "PAYMENT",
+    method: "CASH",
+    currency: "SYP",
+    amount: 650_000,
+    exchangeRate: 13_000,
+  });
+
+  // Declined, with the reason kept for the follow-up team.
+  const veneers = await demoPlan(patients[4], drYaman, "ابتسامة هوليود 8 أسنان", [{ code: "VENEER_8_PACKAGE" }]);
+  await billing.changePlanStatus(receptionActor, { planId: veneers.id, action: "decline", reason: "بدو يفكر بالسعر" });
+
+  // Changed their mind after the deposit: plan cancelled, refund requested.
+  const single = await demoPlan(patients[5], drWajih, "زرعة SGS مفردة", [
+    { code: "IMPLANT_SGS", teeth: "21" },
+    { code: "IMPLANT_CROWN", teeth: "21" },
+  ]);
+  await billing.changePlanStatus(receptionActor, { planId: single.id, action: "accept" });
+  await billing.recordPayment(receptionActor, {
+    patientId: patients[5].id,
+    planId: single.id,
+    kind: "DEPOSIT",
+    method: "CASH",
+    currency: "USD",
+    amount: 1_500,
+  });
+  await billing.changePlanStatus(clinicianActor(drWajih), { planId: single.id, action: "cancel", reason: "سافر خارج البلد" });
+  await billing.requestRefund(receptionActor, {
+    patientId: patients[5].id,
+    planId: single.id,
+    amountUsdCents: 1_500,
+    channel: "ELECTRONIC",
+    reason: "غيّر رأيه",
+  });
+  const planCount = await prisma.treatmentPlan.count();
+
   console.log("Seed complete:");
   console.log(`  Practice: ${practice.name}`);
   console.log(`  Practitioners: ${practitioners.length}`);
@@ -1047,6 +1155,7 @@ async function main() {
   console.log(`  Chart entries (demo patients A-H): ${chartEntryCount}`);
   console.log(`  BPE exams (demo patient G): ${bpeExamCount}`);
   console.log(`  Clinical images (demo patient H): ${clinicalImageCount}`);
+  console.log(`  Price list items: ${catalog.length}, treatment plans: ${planCount}`);
   console.log(`  Demo login password for all seeded users: ${DEV_PASSWORD}`);
 }
 

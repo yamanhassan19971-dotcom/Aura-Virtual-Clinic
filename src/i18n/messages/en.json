@@ -33,7 +33,8 @@
     "reports": "Reports",
     "settings": "Settings",
     "comingSoon": "Coming in a later phase",
-    "location": "Location"
+    "location": "Location",
+    "locationName": "Jdeidet Artouz"
   },
   "login": {
     "title": "Sign in to AURA",
@@ -204,7 +205,8 @@
     "weekday": "Day",
     "startTime": "Start",
     "endTime": "End",
-    "saved": "Saved"
+    "saved": "Saved",
+    "priceList": "Treatments & Prices"
   },
   "placeholder": {
     "title": "Coming in a later phase",
@@ -627,6 +629,178 @@
       "EXTRAORAL_PHOTO": "Extraoral Photograph",
       "RADIOGRAPH": "Radiograph",
       "OTHER": "Other Clinical Image"
+    }
+  },
+  "billing": {
+    "plans": {
+      "title": "Treatment Plans",
+      "newPlan": "New treatment plan",
+      "planTitle": "Plan title",
+      "titlePlaceholder": "e.g. 4D Smile upper jaw",
+      "practitioner": "Doctor",
+      "notes": "Notes",
+      "empty": "No treatment plans yet.",
+      "create": "Create plan",
+      "created": "Created",
+      "items": "Treatments",
+      "noItems": "No treatments added yet.",
+      "addItem": "Add treatment",
+      "fromPriceList": "From price list",
+      "custom": "Custom treatment",
+      "description": "Treatment",
+      "teeth": "Teeth",
+      "teethPlaceholder": "e.g. 36, 46",
+      "quantity": "Qty",
+      "unitPrice": "Unit price ($)",
+      "lineTotal": "Total",
+      "remove": "Remove",
+      "markDone": "Done",
+      "markCancelled": "Cancel item",
+      "subtotal": "Subtotal",
+      "discount": "Discount ($)",
+      "total": "Total",
+      "paid": "Paid",
+      "refunded": "Refunded",
+      "balance": "Balance",
+      "deposit": "Deposit",
+      "maxDeposit": "Max deposit (5%)",
+      "stages": "Payment stages",
+      "stage": "Stage {n}",
+      "stageHint": "Stage 1 at the start, stage 2 mid-treatment, stage 3 at the final result.",
+      "stagePercents": "Split (%)",
+      "due": "Due",
+      "remaining": "Remaining",
+      "editMoney": "Edit discount / split",
+      "saveMoney": "Save",
+      "print": "Print plan",
+      "openAccount": "Take payment",
+      "lockedHint": "This plan was accepted, so its prices are fixed. Treatments can be marked done or cancelled.",
+      "reasonPrompt": "Reason (optional)",
+      "action": {
+        "present": "Mark as presented",
+        "accept": "Patient accepted",
+        "decline": "Patient declined",
+        "complete": "Complete plan",
+        "cancel": "Cancel plan",
+        "reopen": "Reopen"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "PRESENTED": "Presented",
+        "ACCEPTED": "Accepted",
+        "IN_PROGRESS": "In progress",
+        "COMPLETED": "Completed",
+        "DECLINED": "Declined",
+        "CANCELLED": "Cancelled"
+      },
+      "itemStatus": {
+        "PLANNED": "Planned",
+        "COMPLETED": "Done",
+        "CANCELLED": "Cancelled"
+      },
+      "allStatuses": "All",
+      "patient": "Patient",
+      "updated": "Updated",
+      "listEmpty": "No plans match this filter.",
+      "awaitingHint": "Presented plans are waiting on the patient's decision: these are your follow-up calls."
+    },
+    "account": {
+      "title": "Account",
+      "billed": "Accepted treatment",
+      "paid": "Paid",
+      "refunded": "Refunded",
+      "balance": "Balance due",
+      "pendingRefunds": "Refunds pending",
+      "inCredit": "In credit",
+      "payments": "Payments",
+      "noPayments": "No payments yet.",
+      "recordPayment": "Record payment",
+      "receipt": "Receipt",
+      "date": "Date",
+      "plan": "Plan",
+      "noPlan": "No plan (general)",
+      "kind": "Type",
+      "method": "Method",
+      "amount": "Amount",
+      "currency": "Currency",
+      "exchangeRate": "Exchange rate (SYP per $1)",
+      "usdEquivalent": "USD equivalent",
+      "receivedBy": "Received by",
+      "note": "Note",
+      "void": "Void",
+      "voided": "Voided",
+      "voidReason": "Reason for voiding",
+      "printReceipt": "Print receipt",
+      "depositHint": "Deposit is taken only after the patient accepts the plan and books the procedure, and can't exceed 5% of the total ({max}).",
+      "refunds": "Refund requests",
+      "noRefunds": "No refund requests.",
+      "requestRefund": "Refund request",
+      "channel": "Request made",
+      "reason": "Reason",
+      "dueBy": "Pay by",
+      "overdue": "Overdue",
+      "markPaid": "Mark refunded",
+      "reject": "Reject",
+      "processedBy": "Processed by",
+      "refundPolicy": "Electronic requests (WhatsApp/website) are paid within 1-3 working days; in person on the spot, or within 3 working days if cash isn't available.",
+      "kindValue": {
+        "DEPOSIT": "Deposit",
+        "PAYMENT": "Payment"
+      },
+      "methodValue": {
+        "CASH": "Cash",
+        "SHAM_CASH": "Sham Cash",
+        "BANK_TRANSFER": "Bank transfer",
+        "OTHER": "Other"
+      },
+      "channelValue": {
+        "ELECTRONIC": "Electronically (WhatsApp/website)",
+        "IN_PERSON": "In person"
+      },
+      "refundStatus": {
+        "REQUESTED": "Requested",
+        "PAID": "Refunded",
+        "REJECTED": "Rejected"
+      }
+    },
+    "priceList": {
+      "title": "Treatments & Prices",
+      "code": "Code",
+      "nameEn": "Name (English)",
+      "nameAr": "Name (Arabic)",
+      "category": "Category",
+      "price": "Price ($)",
+      "priceNote": "Price note",
+      "add": "Add treatment",
+      "hint": "Prices here are copied into a plan when a treatment is added, so changing a price never alters existing plans."
+    },
+    "print": {
+      "planTitle": "Treatment plan",
+      "receiptTitle": "Payment receipt",
+      "patient": "Patient",
+      "fileNo": "File no.",
+      "date": "Date",
+      "doctor": "Doctor",
+      "signaturePatient": "Patient signature",
+      "signatureClinic": "Clinic",
+      "printNow": "Print",
+      "validity": "Prices exclude radiology. Staged payment: {s1}% at the start, {s2}% mid-treatment, {s3}% at the final result.",
+      "receivedFrom": "Received from",
+      "forPlan": "For plan",
+      "thankYou": "Thank you for trusting AURA."
+    },
+    "errors": {
+      "PLAN_LOCKED": "This plan was accepted, so its prices can't be changed.",
+      "PLAN_EMPTY": "Add at least one treatment first.",
+      "PLAN_HAS_OPEN_ITEMS": "Mark every treatment as done or cancelled first.",
+      "PLAN_NOT_ACTIVE": "Treatment can only be recorded on an accepted plan.",
+      "PLAN_NOT_ACCEPTED": "Payments can only be taken once the patient has accepted the plan.",
+      "DEPOSIT_OVER_LIMIT": "The deposit can't be more than 5% of the plan total.",
+      "OVERPAYMENT": "This is more than the remaining balance.",
+      "REFUND_OVER_PAID": "The refund is more than the amount paid.",
+      "ALREADY_VOIDED": "This payment was already voided.",
+      "DISCOUNT_TOO_LARGE": "The discount can't be more than the total.",
+      "DUPLICATE_CODE": "A treatment with this code already exists."
     }
   }
 }

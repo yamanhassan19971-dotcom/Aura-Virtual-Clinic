@@ -3,7 +3,7 @@ export type TimeScale = 5 | 10 | 15 | 30;
 export const TIME_SCALES: TimeScale[] = [5, 10, 15, 30];
 
 export const DAY_START_MINUTE = 7 * 60; // diary shows 07:00
-export const DAY_END_MINUTE = 19 * 60; // through 19:00
+export const DAY_END_MINUTE = 21 * 60; // through 21:00 (AURA is open until 20:00)
 export const SLOT_PIXELS = 34; // px per one time-scale slot, e.g. one 15-min row
 
 export function pixelsPerMinute(scale: TimeScale): number {

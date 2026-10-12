@@ -29,7 +29,8 @@ function withMoney(plan: PlanRow): PlanWithMoney {
     payments: plan.payments,
     refunds: plan.refundRequests,
   });
-  const { payments, refundRequests: _refunds, ...rest } = plan;
+  const { payments, ...rest } = plan;
+  delete (rest as Partial<PlanRow>).refundRequests;
   return {
     ...rest,
     balance,
@@ -117,10 +118,12 @@ export async function getPatientAccount(practiceId: string, patientId: string) {
     .filter((p) => p.status === "ACCEPTED" || p.status === "IN_PROGRESS" || p.status === "COMPLETED")
     .reduce((s, p) => s + p.balance.totalCents, 0);
 
+  // Overdue is decided on the server so every viewer sees the same answer.
+  const now = new Date();
   return {
     plans,
     payments,
-    refunds,
+    refunds: refunds.map((r) => ({ ...r, overdue: r.status === "REQUESTED" && r.dueBy < now })),
     summary: {
       billedCents,
       paidCents,

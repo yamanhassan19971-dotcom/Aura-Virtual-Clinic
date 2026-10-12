@@ -7,6 +7,7 @@ const TABS = [
   { href: "/settings/clinicians", key: "clinicians" },
   { href: "/settings/appointment-types", key: "appointmentTypes" },
   { href: "/settings/working-hours", key: "workingHours" },
+  { href: "/settings/price-list", key: "priceList" },
 ];
 
 export function SettingsTabs() {
