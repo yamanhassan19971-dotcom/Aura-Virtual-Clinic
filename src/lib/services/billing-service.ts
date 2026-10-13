@@ -5,8 +5,6 @@ import type { Actor } from "@/lib/services/actor";
 import { serialize, writeAudit } from "@/lib/services/audit";
 import { BusinessRuleError, InvalidTransitionError, NotFoundError } from "@/lib/services/errors";
 import {
-  MAX_DEPOSIT_PERCENT,
-  maxDepositCents,
   planBalance,
   planTotalCents,
   refundDueBy,
@@ -432,19 +430,6 @@ export async function recordPayment(actor: Actor, rawInput: unknown) {
           "PLAN_NOT_ACCEPTED",
           "Payments can only be taken on a plan the patient has accepted."
         );
-      }
-
-      const total = planTotalCents(plan.items, plan.discountCents);
-      if (input.kind === "DEPOSIT") {
-        const existingDeposits = plan.payments
-          .filter((p) => p.kind === "DEPOSIT" && !p.voidedAt)
-          .reduce((s, p) => s + p.amountUsdCents, 0);
-        if (existingDeposits + amountUsdCents > maxDepositCents(total)) {
-          throw new BusinessRuleError(
-            "DEPOSIT_OVER_LIMIT",
-            `A deposit can't be more than ${MAX_DEPOSIT_PERCENT}% of the plan total.`
-          );
-        }
       }
 
       const balance = planBalance({

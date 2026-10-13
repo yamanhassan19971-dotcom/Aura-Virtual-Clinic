@@ -174,15 +174,13 @@ describe("payments", () => {
     ).rejects.toEqual(ruleCode("PLAN_NOT_ACCEPTED"));
   });
 
-  it("caps the deposit at 5% of the plan total", async () => {
+  it("lets the deposit go above 5%, up to the full plan total", async () => {
     const { actors, patient1, plan } = await acceptedPlan();
     const base = { patientId: patient1.id, planId: plan.id, kind: "DEPOSIT", method: "CASH", currency: "USD" } as const;
+    // 5% of $1,000 is only a suggestion; the patient can pay the whole plan as a deposit.
     await recordPayment(actors.reception, { ...base, amount: 3_000 });
-    // $30 already taken; another $25 would make $55 > $50 (5% of $1,000).
-    await expect(recordPayment(actors.reception, { ...base, amount: 2_500 })).rejects.toEqual(
-      ruleCode("DEPOSIT_OVER_LIMIT")
-    );
-    await recordPayment(actors.reception, { ...base, amount: 2_000 });
+    await recordPayment(actors.reception, { ...base, amount: 97_000 });
+    await expect(recordPayment(actors.reception, { ...base, amount: 200 })).rejects.toEqual(ruleCode("OVERPAYMENT"));
   });
 
   it("stops a clinician taking money and blocks overpayment", async () => {

@@ -18,7 +18,7 @@ Scope: treatment plans, payments and refunds built around AURA's own rules, plus
 | Rule | Where |
 |---|---|
 | Deposit only after the patient accepts the plan | `recordPayment` → `PLAN_NOT_ACCEPTED` |
-| Deposit never more than 5% of the plan total (cumulative) | `recordPayment` → `DEPOSIT_OVER_LIMIT` |
+| Deposit of about 5% is suggested, not enforced: the patient may pay up to the full amount | UI hint; `OVERPAYMENT` is the only limit |
 | Prices, items, discount and split are frozen once accepted | `assertEditable` → `PLAN_LOCKED` |
 | No payment beyond the remaining balance ($1 tolerance for SYP rounding) | `OVERPAYMENT` |
 | Refunds can't exceed what was paid, counting open requests | `REFUND_OVER_PAID` |
@@ -48,7 +48,7 @@ One additive migration, `phase4_treatment_plans_payments`: `TreatmentCatalogItem
 ## 6. Tests
 
 - Unit: 21 new tests (`tests/unit/billing-service.test.ts`), 73 total, all passing.
-- E2E: new Scenario 22 (doctor builds and presents a plan, reception records acceptance, a 5%-capped deposit is refused then accepted, a payment settles stage 1). Full suite: 27/28 passed; Scenario 16 (clinical note sign) failed once and passed on rerun, the timing flake already noted in the Phase 2 report, untouched by this phase.
+- E2E: new Scenario 22 (doctor builds and presents a plan, reception records acceptance, a deposit above the suggested 5% is accepted, a payment settles stage 1). Full suite: 27/28 passed; Scenario 16 (clinical note sign) failed once and passed on rerun, the timing flake already noted in the Phase 2 report, untouched by this phase.
 
 ## 7. Open items for the clinic
 

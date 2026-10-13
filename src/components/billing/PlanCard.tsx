@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { TreatmentCatalogItem, TreatmentPlanStatus } from "@prisma/client";
 import { Link } from "@/i18n/navigation";
 import { formatLongDate } from "@/lib/time";
-import { dollarsToCents, formatUsd, maxDepositCents, planIsBillable, planSubtotalCents } from "@/lib/billing/money";
+import { dollarsToCents, formatUsd, suggestedDepositCents, planIsBillable, planSubtotalCents } from "@/lib/billing/money";
 import type { PlanWithMoney } from "@/lib/services/billing-queries";
 import type { PlanAction } from "@/lib/validation/billing";
 import {
@@ -395,8 +395,8 @@ export function PlanCard({
               )}
               <dt className="font-semibold">{t("total")}</dt>
               <dd className="text-end font-semibold">{formatUsd(plan.balance.totalCents)}</dd>
-              <dt className="text-gray-500">{t("maxDeposit")}</dt>
-              <dd className="text-end text-gray-500">{formatUsd(maxDepositCents(plan.balance.totalCents))}</dd>
+              <dt className="text-gray-500">{t("suggestedDeposit")}</dt>
+              <dd className="text-end text-gray-500">{formatUsd(suggestedDepositCents(plan.balance.totalCents))}</dd>
               {billable && (
                 <>
                   <dt className="text-gray-500">{t("paid")}</dt>

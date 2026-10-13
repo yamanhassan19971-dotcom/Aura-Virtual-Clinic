@@ -3,8 +3,8 @@ import type { Currency, TreatmentItemStatus, TreatmentPlanStatus } from "@prisma
 // Pure money/plan arithmetic shared by the billing service, the UI and the
 // unit tests. All USD amounts are integer cents; SYP amounts are whole pounds.
 
-/** AURA policy: a deposit is never more than 5% of the treatment's total cost. */
-export const MAX_DEPOSIT_PERCENT = 5;
+/** AURA takes a small deposit (about 5%) to show commitment; it is a suggestion, not a limit. */
+export const SUGGESTED_DEPOSIT_PERCENT = 5;
 
 /** AURA policy: refunds are processed within 3 working days (Friday is the weekly closing day). */
 export const REFUND_WORKING_DAYS = 3;
@@ -42,8 +42,8 @@ export function planTotalCents(items: ItemLike[], discountCents: number): number
   return Math.max(0, planSubtotalCents(items) - discountCents);
 }
 
-export function maxDepositCents(planTotal: number): number {
-  return Math.floor((planTotal * MAX_DEPOSIT_PERCENT) / 100);
+export function suggestedDepositCents(planTotal: number): number {
+  return Math.floor((planTotal * SUGGESTED_DEPOSIT_PERCENT) / 100);
 }
 
 /** Plans in these states owe nothing (declined/cancelled) or are not yet agreed (draft/presented). */

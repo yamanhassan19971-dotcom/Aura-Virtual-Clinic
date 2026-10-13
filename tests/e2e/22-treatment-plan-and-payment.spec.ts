@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures";
 import { login, openPatientRecord } from "./helpers";
 
-test("Scenario 22: a doctor builds a plan, the patient accepts, reception takes a capped deposit and a payment", async ({
+test("Scenario 22: a doctor builds a plan, the patient accepts, reception takes a deposit above the suggested 5% and a payment", async ({
   page: doctorPage,
   browser,
 }) => {
@@ -37,16 +37,14 @@ test("Scenario 22: a doctor builds a plan, the patient accepts, reception takes 
   await page.getByRole("button", { name: "Record payment" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Type").selectOption("DEPOSIT");
-  // $400 plan: 5% cap is $20, so a $25 deposit is refused.
+  // $400 plan: 5% ($20) is only suggested, so a larger $25 deposit is accepted.
+  await expect(dialog.getByText("About 5% ($20) shows commitment")).toBeVisible();
   await dialog.getByLabel("Amount").fill("25");
-  await dialog.getByRole("button", { name: "Record payment" }).click();
-  await expect(page.getByText("The deposit can't be more than 5% of the plan total.")).toBeVisible();
-  await dialog.getByLabel("Amount").fill("20");
   await dialog.getByRole("button", { name: "Record payment" }).click();
   await expect(dialog).toBeHidden();
 
   await page.getByRole("button", { name: "Record payment" }).click();
-  await page.getByRole("dialog").getByLabel("Amount").fill("180");
+  await page.getByRole("dialog").getByLabel("Amount").fill("175");
   await page.getByRole("dialog").getByRole("button", { name: "Record payment" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
 

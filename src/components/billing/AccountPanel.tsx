@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { Currency, PaymentKind, PaymentMethod, RefundChannel } from "@prisma/client";
 import { formatLongDate } from "@/lib/time";
-import { dollarsToCents, formatAmount, formatUsd, maxDepositCents, toUsdCents } from "@/lib/billing/money";
+import { dollarsToCents, formatAmount, formatUsd, suggestedDepositCents, toUsdCents } from "@/lib/billing/money";
 import type { getPatientAccount } from "@/lib/services/billing-queries";
 import { processRefundAction, recordPaymentAction, requestRefundAction, voidPaymentAction } from "@/lib/actions/billing-actions";
 import { Modal } from "@/components/ui/Modal";
@@ -96,7 +96,7 @@ function RecordPaymentModal({ patientId, account, onClose }: { patientId: string
         </div>
         {kind === "DEPOSIT" && plan && (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            {t("depositHint", { max: formatUsd(maxDepositCents(plan.balance.totalCents) - plan.depositCents) })}
+            {t("depositHint", { suggested: formatUsd(suggestedDepositCents(plan.balance.totalCents)) })}
           </p>
         )}
         <div className="grid grid-cols-3 gap-3">
