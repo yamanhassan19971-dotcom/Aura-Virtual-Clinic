@@ -12,6 +12,7 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:setup-clinic": "tsx prisma/setup-clinic.ts",
     "db:reset": "prisma migrate reset --force",
     "test:unit": "vitest run",
     "test:e2e": "playwright test"

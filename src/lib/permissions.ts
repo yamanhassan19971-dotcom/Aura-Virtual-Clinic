@@ -25,6 +25,14 @@ export type Permission =
   | "patients.manageClinicalChart"
   | "patients.manageBpe"
   | "patients.manageClinicalImages"
+  | "treatmentPlans.view"
+  | "treatmentPlans.manage"
+  | "treatmentPlans.recordDecision"
+  | "payments.view"
+  | "payments.record"
+  | "payments.void"
+  | "refunds.request"
+  | "refunds.process"
   | "settings.manage"
   | "reports.view";
 
@@ -37,6 +45,10 @@ export type Permission =
 // demographic/administrative access but NO clinical access (medical
 // history, alerts, clinical notes) — that's reserved for Clinician/Admin.
 // Practice Manager can *see* clinical data (oversight) but not author it.
+//
+// Phase 4 money rules: clinicians build and present treatment plans;
+// reception takes payments and logs refund requests; only a Practice
+// Manager/Admin can void a payment or pay out/reject a refund.
 const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
   ADMIN: {
     "appointments.create": true,
@@ -63,6 +75,14 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageClinicalChart": true,
     "patients.manageBpe": true,
     "patients.manageClinicalImages": true,
+    "treatmentPlans.view": true,
+    "treatmentPlans.manage": true,
+    "treatmentPlans.recordDecision": true,
+    "payments.view": true,
+    "payments.record": true,
+    "payments.void": true,
+    "refunds.request": true,
+    "refunds.process": true,
     "settings.manage": true,
     "reports.view": true,
   },
@@ -91,6 +111,14 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageClinicalChart": false,
     "patients.manageBpe": false,
     "patients.manageClinicalImages": false,
+    "treatmentPlans.view": true,
+    "treatmentPlans.manage": true,
+    "treatmentPlans.recordDecision": true,
+    "payments.view": true,
+    "payments.record": true,
+    "payments.void": true,
+    "refunds.request": true,
+    "refunds.process": true,
     "settings.manage": true,
     "reports.view": true,
   },
@@ -119,6 +147,14 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageClinicalChart": false,
     "patients.manageBpe": false,
     "patients.manageClinicalImages": false,
+    "treatmentPlans.view": true,
+    "treatmentPlans.manage": false,
+    "treatmentPlans.recordDecision": true,
+    "payments.view": true,
+    "payments.record": true,
+    "payments.void": false,
+    "refunds.request": true,
+    "refunds.process": false,
     "settings.manage": false,
     "reports.view": false,
   },
@@ -147,6 +183,14 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "patients.manageClinicalChart": true,
     "patients.manageBpe": true,
     "patients.manageClinicalImages": true,
+    "treatmentPlans.view": true,
+    "treatmentPlans.manage": true,
+    "treatmentPlans.recordDecision": true,
+    "payments.view": true,
+    "payments.record": false,
+    "payments.void": false,
+    "refunds.request": false,
+    "refunds.process": false,
     "settings.manage": false,
     "reports.view": false,
   },

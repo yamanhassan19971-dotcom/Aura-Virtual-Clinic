@@ -8,8 +8,10 @@ const TABS = [
   "overview",
   "details",
   "chart",
+  "treatmentPlans",
   "medical",
   "appointments",
+  "account",
   "history",
   "images",
   "notes",
@@ -17,7 +19,8 @@ const TABS = [
   "tasks",
 ] as const;
 const CLINICAL_TABS = new Set<(typeof TABS)[number]>(["chart", "medical", "history", "images"]);
-const FUTURE_TABS = ["treatmentPlans", "account"] as const;
+// Tab key -> URL segment, where they differ.
+const TAB_SLUGS: Partial<Record<(typeof TABS)[number], string>> = { treatmentPlans: "treatment-plans" };
 
 export function PatientTabs({ patientId, canViewClinical }: { patientId: string; canViewClinical: boolean }) {
   const t = useTranslations("patient.tabs");
@@ -52,11 +55,12 @@ export function PatientTabs({ patientId, canViewClinical }: { patientId: string;
             </span>
           );
         }
-        const active = pathname === `${base}/${tab}`;
+        const slug = TAB_SLUGS[tab] ?? tab;
+        const active = pathname === `${base}/${slug}`;
         return (
           <Link
             key={tab}
-            href={`${base}/${tab}${extraQuery}`}
+            href={`${base}/${slug}${extraQuery}`}
             className={`border-b-2 px-3 py-3 text-sm font-medium ${
               active
                 ? "border-[var(--color-blue)] text-[var(--color-blue)]"
@@ -67,15 +71,6 @@ export function PatientTabs({ patientId, canViewClinical }: { patientId: string;
           </Link>
         );
       })}
-      {FUTURE_TABS.map((tab) => (
-        <span
-          key={tab}
-          title={tCommon("comingSoonTab")}
-          className="cursor-not-allowed border-b-2 border-transparent px-3 py-3 text-sm font-medium text-gray-300"
-        >
-          {t(tab)}
-        </span>
-      ))}
     </div>
   );
 }

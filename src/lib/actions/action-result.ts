@@ -2,6 +2,7 @@ import { ZodError } from "zod";
 import { auth } from "@/lib/auth";
 import type { Actor } from "@/lib/services/actor";
 import {
+  BusinessRuleError,
   ConflictError,
   DuplicatePatientError,
   InvalidTransitionError,
@@ -39,8 +40,10 @@ export type ActionResult<T> =
         | "INVALID_TRANSITION"
         | "DUPLICATE_PATIENT"
         | "RECORD_LOCKED"
+        | "RULE"
         | "UNKNOWN";
       message: string;
+      code?: string;
       conflict?: ConflictInfo;
       duplicates?: DuplicatePatientInfo[];
     };
@@ -106,6 +109,9 @@ export async function runAction<T>(fn: () => Promise<T>): Promise<ActionResult<T
     }
     if (error instanceof RecordLockedError) {
       return { ok: false, kind: "RECORD_LOCKED", message: error.message };
+    }
+    if (error instanceof BusinessRuleError) {
+      return { ok: false, kind: "RULE", message: error.message, code: error.code };
     }
     if (error instanceof InvalidDocumentFileError) {
       return { ok: false, kind: "VALIDATION", message: error.message };

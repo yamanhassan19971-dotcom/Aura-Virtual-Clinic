@@ -61,7 +61,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-white/10 px-5 py-4 text-xs text-white/40">
-        {t("location")}: Damascus Main Clinic
+        {t("location")}: {t("locationName")}
       </div>
     </aside>
   );
