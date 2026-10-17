@@ -4,6 +4,7 @@ import { assertCan } from "@/lib/permissions";
 import type { Actor } from "@/lib/services/actor";
 import { serialize, writeAudit } from "@/lib/services/audit";
 import { BusinessRuleError, InvalidTransitionError, NotFoundError } from "@/lib/services/errors";
+import { onPlanStatusChanged } from "@/lib/services/follow-up-hooks";
 import {
   planBalance,
   planTotalCents,
@@ -332,6 +333,7 @@ async function settlePlanItem(actor: Actor, rawInput: unknown, outcome: "COMPLET
         previousValue: { status: item.plan.status },
         newValue: { status: nextStatus, automatic: true },
       });
+      await onPlanStatusChanged(tx, item.plan, nextStatus, actor.id, now);
     }
     return { item: updatedItem, planStatus: nextStatus };
   });
@@ -403,6 +405,7 @@ export async function changePlanStatus(actor: Actor, rawInput: unknown) {
       previousValue: { status: plan.status },
       newValue: { status: transition.to, reason: input.reason ?? null },
     });
+    await onPlanStatusChanged(tx, plan, transition.to, actor.id);
     return updated;
   });
 }

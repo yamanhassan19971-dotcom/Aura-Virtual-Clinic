@@ -16,6 +16,9 @@ import {
 } from "@prisma/client";
 import argon2 from "argon2";
 import * as billing from "../src/lib/services/billing-service";
+import * as leads from "../src/lib/services/lead-service";
+import { onAppointmentBooked } from "../src/lib/services/follow-up-hooks";
+import { FOLLOW_UP_CHANNEL, postOpFollowUps } from "../src/lib/followups/schedule";
 import { saveDocumentFile } from "../src/lib/documents/storage";
 import { MEDICAL_QUESTIONS } from "../src/lib/medical/question-catalog";
 import { PATIENT_FLAG_KEYS } from "../src/lib/patients/flag-catalog";
@@ -141,12 +144,13 @@ async function main() {
     });
     const practitioner = await prisma.practitioner.upsert({
       where: { id: `practitioner-${i}` },
-      update: {},
+      update: { nameAr: spec.nameAr },
       create: {
         id: `practitioner-${i}`,
         practiceId: practice.id,
         userId: clinicianUser.id,
         name: spec.name,
+        nameAr: spec.nameAr,
         title: spec.title,
         colorHex: spec.color,
         defaultRoomId: rooms[i % rooms.length].id,
@@ -169,7 +173,7 @@ async function main() {
     const t = APPOINTMENT_TYPES[i];
     const type = await prisma.appointmentType.upsert({
       where: { id: `apptype-${i}` },
-      update: {},
+      update: { postOpFollowUp: t.postOp ?? false },
       create: {
         id: `apptype-${i}`,
         practiceId: practice.id,
@@ -177,6 +181,7 @@ async function main() {
         defaultDurationMin: t.minutes,
         colorHex: t.color,
         sortOrder: i,
+        postOpFollowUp: t.postOp ?? false,
       },
     });
     appointmentTypes.push(type);
@@ -247,6 +252,9 @@ async function main() {
   }
 
   await prisma.auditLog.deleteMany({ where: {} });
+  await prisma.followUp.deleteMany({ where: {} });
+  await prisma.leadActivity.deleteMany({ where: {} });
+  await prisma.lead.deleteMany({ where: {} });
   // Phase 4 billing rows reference patients/plans; cleared before re-seeding.
   await prisma.refundRequest.deleteMany({ where: {} });
   await prisma.payment.deleteMany({ where: {} });
@@ -1137,12 +1145,174 @@ async function main() {
     channel: "ELECTRONIC",
     reason: "غيّر رأيه",
   });
+
+  // --- Phase 5: enquiries at every stage, and a realistic follow-up list ---
+  const seedNow = new Date();
+  const minutesAgo = (m: number) => new Date(seedNow.getTime() - m * 60000);
+  const at = (dayOffset: number, hour: number, minute = 0) => {
+    const d = new Date(seedNow);
+    d.setDate(d.getDate() + dayOffset);
+    if (d.getDay() === 5) d.setDate(d.getDate() + (dayOffset >= 0 ? 1 : -1));
+    d.setHours(hour, minute, 0, 0);
+    return d;
+  };
+  const consultType = await prisma.appointmentType.findFirstOrThrow({ where: { practiceId: practice.id, name: "Free Consultation" } });
+  const consultSlot = (doctor: Practitioner, startTime: Date) => ({
+    practitionerId: doctor.id,
+    roomId: doctor.defaultRoomId!,
+    appointmentTypeId: consultType.id,
+    startTime: startTime.toISOString(),
+    durationMin: 30,
+    overrideConflict: true,
+  });
+  const adminActor = { ...receptionActor, role: Role.ADMIN };
+
+  await leads.createLead(receptionActor, {
+    name: "أبو أحمد",
+    phone: "0933 214 870",
+    source: "FACEBOOK_AD",
+    sourceNote: "أسنانك في يوم",
+    interest: "IMPLANTS",
+    forWhom: "إلو",
+    location: "جديدة عرطوز",
+    keyWords: "خايف من الوجع، ناقصو ضرسين من سنة",
+    firstMessageAt: minutesAgo(3),
+  });
+  await leads.createLead(receptionActor, {
+    name: "رهف",
+    phone: "0944 518 302",
+    source: "INSTAGRAM",
+    interest: "HOLLYWOOD_SMILE",
+    forWhom: "إلها",
+    location: "دمشق، المزة",
+    keyWords: "عرسها بعد شهرين",
+    firstMessageAt: minutesAgo(27),
+  });
+  const umSami = await leads.createLead(receptionActor, {
+    name: "أم سامي",
+    phone: "0955 730 114",
+    source: "REFERRAL",
+    sourceNote: "خالتها مريضة عنا",
+    interest: "ORTHODONTICS",
+    forWhom: "لبنتها (9 سنين)",
+    location: "صحنايا",
+    keyWords: "سألت عيادة تانية، بدها تعرف الأقساط",
+    toldSoFar: "أعطيناها مجال سعر التقويم 700 لـ 1000$، والاستشارة مجانية",
+    firstMessageAt: minutesAgo(180),
+    replied: true,
+  });
+  await leads.scheduleCall(receptionActor, { leadId: umSami.id, callAt: at(0, 18).toISOString() });
+  const khaled = await leads.createLead(receptionActor, {
+    name: "خالد العلي",
+    phone: "0988 402 671",
+    source: "FACEBOOK_AD",
+    sourceNote: "ابتسامة 4D",
+    interest: "SMILE_4D",
+    forWhom: "لأبوه (62 سنة)",
+    location: "الحسكة",
+    keyWords: "أبوه طقمو متعبو، بدهم ينزلو عالشام مرة وحدة",
+    toldSoFar: "شرحنالو إنو بيفوت بلا أسنان وبيطلع بأسنان بنفس اليوم",
+    firstMessageAt: minutesAgo(26 * 60),
+    replied: true,
+  });
+  await leads.scheduleCall(receptionActor, { leadId: khaled.id, callAt: minutesAgo(90).toISOString() });
+  await leads.logContact(receptionActor, { leadId: khaled.id, outcome: "NO_ANSWER" });
+  await prisma.lead.update({ where: { id: khaled.id }, data: { callAt: minutesAgo(20) } });
+  const mahmoud = await leads.createLead(receptionActor, {
+    name: "محمود الشامي",
+    phone: "0991 225 908",
+    source: "GOOGLE",
+    interest: "IMPLANTS",
+    forWhom: "إلو",
+    location: "داريا",
+    keyWords: "بدو يحكي مع ابنو بالخليج قبل ما يقرر",
+    firstMessageAt: minutesAgo(3 * 24 * 60),
+    replied: true,
+  });
+  await leads.markThinking(receptionActor, {
+    leadId: mahmoud.id,
+    followUpAt: at(2, 12).toISOString(),
+    note: "اتفقنا نحكي معو بعد يومين",
+  });
+  const samer = await leads.createLead(receptionActor, {
+    name: "سامر الحلبي",
+    phone: "0936 880 245",
+    source: "WEBSITE",
+    interest: "IMPLANTS",
+    forWhom: "إلو",
+    location: "قطنا",
+    keyWords: "ضرس مكسور، بدو حل سريع",
+    firstMessageAt: minutesAgo(2 * 24 * 60),
+    replied: true,
+  });
+  await leads.bookConsultation(adminActor, {
+    leadId: samer.id,
+    firstName: "سامر",
+    lastName: "الحلبي",
+    dateOfBirth: "1984-01-01",
+    ...consultSlot(drWajih, at(1, 18)),
+  });
+  const huda = await leads.createLead(receptionActor, {
+    name: "هدى",
+    phone: "0947 316 552",
+    source: "FACEBOOK_AD",
+    interest: "HOLLYWOOD_SMILE",
+    firstMessageAt: minutesAgo(5 * 24 * 60),
+    replied: true,
+  });
+  await leads.markLost(receptionActor, { leadId: huda.id, reason: "PRICE", note: "حست السعر عالي، ممكن ترجع بالصيف" });
+
+  // Replies went out a few minutes after each message, not at seed time.
+  for (const lead of await prisma.lead.findMany({ where: { firstReplyAt: { not: null } } })) {
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { firstReplyAt: new Date(lead.firstMessageAt.getTime() + randInt(2, 14) * 60000) },
+    });
+  }
+
+  // A few upcoming appointments get their confirmation and reminders, as
+  // if they'd been booked through the system.
+  const upcoming = await prisma.appointment.findMany({
+    where: { practiceId: practice.id, status: { in: ["PENDING", "CONFIRMED"] }, startTime: { gt: at(0, 21), lt: at(2, 21) } },
+    orderBy: { startTime: "asc" },
+    take: 4,
+  });
+  for (const appt of upcoming) {
+    await prisma.$transaction((tx) => onAppointmentBooked(tx, appt, receptionUser.id, minutesAgo(60)));
+  }
+  // Post-treatment check-ins for two recently finished surgical patients, plus a
+  // satisfaction call and a recall that are due.
+  const finished = await prisma.appointment.findMany({
+    where: { practiceId: practice.id, status: "COMPLETED", startTime: { gte: at(-3, 0) }, appointmentType: { postOpFollowUp: true } },
+    orderBy: { startTime: "desc" },
+    take: 2,
+  });
+  const followUpRows = [
+    ...finished.flatMap((appt) =>
+      postOpFollowUps(minutesAgo(240)).map((p) => ({ ...p, patientId: appt.patientId, appointmentId: appt.id }))
+    ),
+    { kind: "SATISFACTION" as const, dueAt: at(0, 12), patientId: patients[6].id, appointmentId: null },
+    { kind: "RECALL" as const, dueAt: at(0, 12), patientId: patients[7].id, appointmentId: null },
+  ];
+  await prisma.followUp.createMany({
+    data: followUpRows.map((f) => ({
+      practiceId: practice.id,
+      patientId: f.patientId,
+      appointmentId: f.appointmentId,
+      kind: f.kind,
+      channel: FOLLOW_UP_CHANNEL[f.kind],
+      dueAt: f.dueAt,
+      createdById: receptionUser.id,
+    })),
+  });
+
   const planCount = await prisma.treatmentPlan.count();
 
   console.log("Seed complete:");
   console.log(`  Practice: ${practice.name}`);
   console.log(`  Practitioners: ${practitioners.length}`);
   console.log(`  Patients: ${patients.length}`);
+  console.log(`  Enquiries: ${await prisma.lead.count()}, follow-ups: ${await prisma.followUp.count()}`);
   const apptCount = await prisma.appointment.count();
   console.log(`  Appointments: ${apptCount}`);
   console.log(`  Family relationships: ${familyClusters * 2}`);

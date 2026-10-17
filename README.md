@@ -5,6 +5,10 @@ larger practice-management system. See `AURA-PHASE1-PROMPT.md` for the full
 brief and `AURA-PHASE1-HANDOFF.md` for the build plan; the final report at
 the end of this file (or ask the session that built it) covers what shipped.
 
+Later phases each have their own report: `AURA-PHASE2-REPORT.md` (patient
+record), `AURA-PHASE3-REPORT.md` (dental chart), `AURA-PHASE4-REPORT.md` (treatment
+plans and payments) and `AURA-PHASE5-REPORT.md` (enquiry pipeline, follow-ups, weekly KPIs).
+
 ## Stack
 
 Next.js (App Router) · React 19 · TypeScript · Tailwind CSS v4 · PostgreSQL +

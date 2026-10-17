@@ -33,6 +33,10 @@ export type Permission =
   | "payments.void"
   | "refunds.request"
   | "refunds.process"
+  | "leads.view"
+  | "leads.manage"
+  | "followUps.view"
+  | "followUps.manage"
   | "settings.manage"
   | "reports.view";
 
@@ -45,6 +49,9 @@ export type Permission =
 // demographic/administrative access but NO clinical access (medical
 // history, alerts, clinical notes) — that's reserved for Clinician/Admin.
 // Practice Manager can *see* clinical data (oversight) but not author it.
+//
+// Phase 5: reception/call-centre staff own the enquiry pipeline and the
+// follow-up list; clinicians can see their patients' follow-ups.
 //
 // Phase 4 money rules: clinicians build and present treatment plans;
 // reception takes payments and logs refund requests; only a Practice
@@ -84,6 +91,10 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": true,
     "refunds.process": true,
     "settings.manage": true,
+    "leads.view": true,
+    "leads.manage": true,
+    "followUps.view": true,
+    "followUps.manage": true,
     "reports.view": true,
   },
   PRACTICE_MANAGER: {
@@ -120,6 +131,10 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": true,
     "refunds.process": true,
     "settings.manage": true,
+    "leads.view": true,
+    "leads.manage": true,
+    "followUps.view": true,
+    "followUps.manage": true,
     "reports.view": true,
   },
   RECEPTIONIST: {
@@ -156,6 +171,10 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": true,
     "refunds.process": false,
     "settings.manage": false,
+    "leads.view": true,
+    "leads.manage": true,
+    "followUps.view": true,
+    "followUps.manage": true,
     "reports.view": false,
   },
   CLINICIAN: {
@@ -192,6 +211,10 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": false,
     "refunds.process": false,
     "settings.manage": false,
+    "leads.view": false,
+    "leads.manage": false,
+    "followUps.view": true,
+    "followUps.manage": false,
     "reports.view": false,
   },
 };

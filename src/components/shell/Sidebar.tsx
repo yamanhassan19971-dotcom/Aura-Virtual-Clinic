@@ -6,6 +6,8 @@ import {
   CalendarIcon,
   ClinicalIcon,
   DashboardIcon,
+  FollowUpIcon,
+  LeadsIcon,
   PatientsIcon,
   ReportsIcon,
   SettingsIcon,
@@ -18,11 +20,14 @@ type NavItem = {
   labelKey: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   primary?: boolean;
+  badge?: "followUps";
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", icon: DashboardIcon },
   { href: "/appointments", labelKey: "appointments", icon: CalendarIcon, primary: true },
+  { href: "/leads", labelKey: "leads", icon: LeadsIcon },
+  { href: "/follow-ups", labelKey: "followUps", icon: FollowUpIcon, badge: "followUps" },
   { href: "/patients", labelKey: "patients", icon: PatientsIcon },
   { href: "/treatment-plans", labelKey: "treatmentPlans", icon: TreatmentIcon },
   { href: "/clinical", labelKey: "clinical", icon: ClinicalIcon },
@@ -30,7 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/settings", labelKey: "settings", icon: SettingsIcon },
 ];
 
-export function Sidebar() {
+export function Sidebar({ followUpsDue = 0, hidden = [] }: { followUpsDue?: number; hidden?: string[] }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
 
@@ -41,7 +46,7 @@ export function Sidebar() {
         <span className="text-xs text-white/50">Dental PMS</span>
       </div>
       <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => !hidden.includes(item.href)).map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
@@ -55,7 +60,16 @@ export function Sidebar() {
               }`}
             >
               <Icon className="shrink-0" />
-              <span>{t(item.labelKey)}</span>
+              <span className="flex-1">{t(item.labelKey)}</span>
+              {item.badge === "followUps" && followUpsDue > 0 && (
+                <span
+                  className={`rounded-full px-1.5 text-xs font-semibold ${
+                    active ? "bg-[var(--color-navy)] text-white" : "bg-rose-500 text-white"
+                  }`}
+                >
+                  {followUpsDue}
+                </span>
+              )}
             </Link>
           );
         })}

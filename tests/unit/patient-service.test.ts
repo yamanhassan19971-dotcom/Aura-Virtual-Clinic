@@ -34,6 +34,16 @@ describe("patient service", () => {
     expect(audit).toHaveLength(1);
   });
 
+  it("keeps numbering A-codes when other code prefixes exist", async () => {
+    const { actors, practice } = await fixture();
+    await prisma.patient.create({
+      data: { practiceId: practice.id, patientCode: "P30001", firstName: "Demo", lastName: "Chart", dateOfBirth: new Date("1980-01-01") },
+    });
+    const a = await createPatient(actors.reception, { firstName: "One", lastName: "New", dateOfBirth: "1990-01-01" });
+    const b = await createPatient(actors.reception, { firstName: "Two", lastName: "New", dateOfBirth: "1990-01-01" });
+    expect([a.patientCode, b.patientCode]).toEqual(["A00003", "A00004"]);
+  });
+
   it("flags a likely duplicate on create and allows an explicit override", async () => {
     const { actors, patient1 } = await fixture();
 
