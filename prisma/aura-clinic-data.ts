@@ -12,11 +12,11 @@ export const AURA_PRACTICE = {
 export const AURA_ROOMS = ["Surgery 1", "Surgery 2", "Surgery 3"];
 
 export const AURA_PRACTITIONERS = [
-  { key: "yaman", name: "Dr Yaman Hassan", title: "Dentist", color: "#0F2747" },
-  { key: "wajih", name: "Dr Wajih Jahjah", title: "Oral & Maxillofacial Surgeon", color: "#1D4ED8" },
-  { key: "amr", name: "Dr Amr Odeh", title: "Orthodontist", color: "#7C3AED" },
-  { key: "adham", name: "Dr Adham Farroukh", title: "Endodontist & Restorative", color: "#0F766E" },
-  { key: "abeer", name: "Dr Abeer Al-Rifai", title: "Paediatric Dentist", color: "#B45309" },
+  { key: "yaman", name: "Dr Yaman Hassan", nameAr: "د. يمان", title: "Dentist", color: "#0F2747" },
+  { key: "wajih", name: "Dr Wajih Jahjah", nameAr: "د. وجيه", title: "Oral & Maxillofacial Surgeon", color: "#1D4ED8" },
+  { key: "amr", name: "Dr Amr Odeh", nameAr: "د. عمرو", title: "Orthodontist", color: "#7C3AED" },
+  { key: "adham", name: "Dr Adham Farroukh", nameAr: "د. أدهم", title: "Endodontist & Restorative", color: "#0F766E" },
+  { key: "abeer", name: "Dr Abeer Al-Rifai", nameAr: "د. عبير", title: "Paediatric Dentist", color: "#B45309" },
 ];
 
 // 10:00-20:00 every day; Friday (weekday 5) closed except emergencies.
@@ -24,20 +24,22 @@ export const AURA_OPEN_WEEKDAYS = [0, 1, 2, 3, 4, 6];
 export const AURA_OPEN_MINUTE = 10 * 60;
 export const AURA_CLOSE_MINUTE = 20 * 60;
 
-export const AURA_APPOINTMENT_TYPES: Array<{ name: string; minutes: number; color: string }> = [
+// postOp: completing one of these schedules the post-treatment check-ins
+// (WhatsApp the same evening, a call the next day, WhatsApp a few days later).
+export const AURA_APPOINTMENT_TYPES: Array<{ name: string; minutes: number; color: string; postOp?: boolean }> = [
   { name: "Free Consultation", minutes: 30, color: "#0F766E" },
   { name: "Examination", minutes: 30, color: "#3B82F6" },
   { name: "Emergency", minutes: 30, color: "#DC2626" },
-  { name: "Implant Surgery", minutes: 90, color: "#1D4ED8" },
-  { name: "4D Smile Surgery", minutes: 240, color: "#0F2747" },
+  { name: "Implant Surgery", minutes: 90, color: "#1D4ED8", postOp: true },
+  { name: "4D Smile Surgery", minutes: 240, color: "#0F2747", postOp: true },
   { name: "Digital Impressions", minutes: 45, color: "#6366F1" },
-  { name: "Prosthesis Delivery", minutes: 60, color: "#B45309" },
+  { name: "Prosthesis Delivery", minutes: 60, color: "#B45309", postOp: true },
   { name: "Orthodontic Visit", minutes: 30, color: "#7C3AED" },
   { name: "Smile Design / Mock-up", minutes: 60, color: "#CA8A04" },
-  { name: "Veneers Preparation", minutes: 120, color: "#A16207" },
-  { name: "Root Canal", minutes: 90, color: "#BE123C" },
+  { name: "Veneers Preparation", minutes: 120, color: "#A16207", postOp: true },
+  { name: "Root Canal", minutes: 90, color: "#BE123C", postOp: true },
   { name: "Filling", minutes: 45, color: "#8B5CF6" },
-  { name: "Extraction", minutes: 45, color: "#7C2D12" },
+  { name: "Extraction", minutes: 45, color: "#7C2D12", postOp: true },
   { name: "Hygiene", minutes: 45, color: "#0EA5E9" },
   { name: "Child Visit", minutes: 30, color: "#F59E0B" },
   { name: "Follow-up", minutes: 15, color: "#4B5563" },

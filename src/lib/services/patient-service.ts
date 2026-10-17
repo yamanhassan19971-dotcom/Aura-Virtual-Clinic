@@ -15,9 +15,11 @@ import {
 } from "@/lib/validation/patient";
 import { z } from "zod";
 
-async function nextPatientCode(practiceId: string): Promise<string> {
-  const last = await prisma.patient.findFirst({
-    where: { practiceId },
+async function nextPatientCode(practiceId: string, db: Prisma.TransactionClient = prisma): Promise<string> {
+  // Only "A"-numbered codes: other prefixes (e.g. the demo chart patients' "P3000x")
+  // sort after "A" and would otherwise hand out the same next code twice.
+  const last = await db.patient.findFirst({
+    where: { practiceId, patientCode: { startsWith: "A" } },
     orderBy: { patientCode: "desc" },
     select: { patientCode: true },
   });
@@ -70,31 +72,46 @@ export async function createPatient(actor: Actor, rawInput: unknown) {
     }
   }
 
-  return prisma.$transaction(async (tx) => {
-    const patientCode = await nextPatientCode(actor.practiceId);
-    const patient = await tx.patient.create({
-      data: {
-        practiceId: actor.practiceId,
-        patientCode,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        dateOfBirth: input.dateOfBirth,
-        phone: input.phone || null,
-        email: input.email || null,
-        createdById: actor.id,
-        updatedById: actor.id,
-      },
-    });
-    await writeAudit(tx, {
-      userId: actor.id,
-      action: "patient.created",
-      recordType: "Patient",
-      recordId: patient.id,
-      previousValue: null,
-      newValue: serialize(patient),
-    });
-    return patient;
+  return prisma.$transaction((tx) => createPatientInTx(tx, actor, input));
+}
+
+/** The patient insert + audit, for services that create a patient as part of a larger transaction. */
+export async function createPatientInTx(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  input: {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date;
+    phone?: string | null;
+    email?: string | null;
+    acquisitionSource?: string | null;
+  }
+) {
+  const patientCode = await nextPatientCode(actor.practiceId, tx);
+  const patient = await tx.patient.create({
+    data: {
+      practiceId: actor.practiceId,
+      patientCode,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      dateOfBirth: input.dateOfBirth,
+      phone: input.phone || null,
+      email: input.email || null,
+      acquisitionSource: input.acquisitionSource ?? null,
+      createdById: actor.id,
+      updatedById: actor.id,
+    },
   });
+  await writeAudit(tx, {
+    userId: actor.id,
+    action: "patient.created",
+    recordType: "Patient",
+    recordId: patient.id,
+    previousValue: null,
+    newValue: serialize(patient),
+  });
+  return patient;
 }
 
 export async function updatePatientDetails(actor: Actor, rawInput: unknown) {

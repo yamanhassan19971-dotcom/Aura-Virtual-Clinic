@@ -7,4 +7,7 @@ export const CLINIC_PROFILE = {
   addressAr: "جديدة عرطوز البلد، ساحة نيسان",
   addressEn: "Jdeidet Artouz Al-Balad, Nisan Square",
   phone: "+963 930 513 950",
+  // Filled in at the official launch; WhatsApp templates show a placeholder until then.
+  mapsUrl: null as string | null,
+  googleReviewUrl: null as string | null,
 };

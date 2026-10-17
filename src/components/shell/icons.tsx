@@ -71,6 +71,24 @@ export function ClinicalIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function LeadsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M21 12a8.5 8.5 0 0 1-12.4 7.55L3 21l1.45-5.6A8.5 8.5 0 1 1 21 12Z" />
+      <path d="M8.5 12h.01M12 12h.01M15.5 12h.01" />
+    </Icon>
+  );
+}
+
+export function FollowUpIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M9 11l2 2 4-4" />
+      <path d="M8 3h8l1 2h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2l1-2Z" />
+    </Icon>
+  );
+}
+
 export function ReportsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

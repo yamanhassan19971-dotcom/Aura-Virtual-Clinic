@@ -6,11 +6,19 @@ import { ConflictError, InvalidTransitionError, NotFoundError } from "@/lib/serv
 import { writeAudit } from "@/lib/services/audit";
 import { encodeReason } from "@/lib/services/codec";
 import {
+  onAppointmentBooked,
+  onAppointmentCancelled,
+  onAppointmentMissed,
+  onAppointmentProgressed,
+  onAppointmentRescheduled,
+} from "@/lib/services/follow-up-hooks";
+import {
   cancelAppointmentSchema,
   changeStatusSchema,
   createAppointmentSchema,
   ftaAppointmentSchema,
   updateAppointmentSchema,
+  type CreateAppointmentInput,
 } from "@/lib/validation/appointment";
 
 export const APPOINTMENT_INCLUDE = {
@@ -140,65 +148,73 @@ async function assertReferencesBelongToPractice(
  */
 export async function createAppointment(actor: Actor, rawInput: unknown): Promise<AppointmentWithRelations> {
   const input = createAppointmentSchema.parse(rawInput);
+  return prisma.$transaction((tx) => createAppointmentInTx(tx, actor, input));
+}
+
+/** The body of createAppointment, for services that book inside a larger transaction (a lead's consultation). */
+export async function createAppointmentInTx(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  input: CreateAppointmentInput
+): Promise<AppointmentWithRelations> {
   assertCan(actor.role, "appointments.create");
 
   const endTime = new Date(input.startTime.getTime() + input.durationMin * 60000);
 
-  return prisma.$transaction(async (tx) => {
-    await assertReferencesBelongToPractice(tx, actor.practiceId, input);
+  await assertReferencesBelongToPractice(tx, actor.practiceId, input);
 
-    const conflict = await findConflict(tx, {
+  const conflict = await findConflict(tx, {
+    practiceId: actor.practiceId,
+    practitionerId: input.practitionerId,
+    roomId: input.roomId,
+    startTime: input.startTime,
+    endTime,
+  });
+
+  let conflictOverride = false;
+  if (conflict) {
+    if (!input.overrideConflict) throw new ConflictError(conflict);
+    assertCan(actor.role, "appointments.overrideConflict");
+    conflictOverride = true;
+  }
+
+  const appt = await tx.appointment.create({
+    data: {
       practiceId: actor.practiceId,
+      patientId: input.patientId,
       practitionerId: input.practitionerId,
       roomId: input.roomId,
+      appointmentTypeId: input.appointmentTypeId,
+      date: startOfDay(input.startTime),
       startTime: input.startTime,
       endTime,
-    });
-
-    let conflictOverride = false;
-    if (conflict) {
-      if (!input.overrideConflict) throw new ConflictError(conflict);
-      assertCan(actor.role, "appointments.overrideConflict");
-      conflictOverride = true;
-    }
-
-    const appt = await tx.appointment.create({
-      data: {
-        practiceId: actor.practiceId,
-        patientId: input.patientId,
-        practitionerId: input.practitionerId,
-        roomId: input.roomId,
-        appointmentTypeId: input.appointmentTypeId,
-        date: startOfDay(input.startTime),
-        startTime: input.startTime,
-        endTime,
-        durationMin: input.durationMin,
-        status: input.status,
-        notes: input.notes ?? null,
-        conflictOverride,
-        conflictOverrideById: conflictOverride ? actor.id : null,
-        conflictOverrideReason: conflictOverride ? input.overrideReason ?? null : null,
-        createdById: actor.id,
-      },
-      include: APPOINTMENT_INCLUDE,
-    });
-
-    await writeHistory(tx, {
-      appointmentId: appt.id,
-      previousStatus: null,
-      newStatus: appt.status,
-      changedById: actor.id,
-    });
-    await writeAppointmentAudit(tx, {
-      userId: actor.id,
-      action: "appointment.created",
-      recordId: appt.id,
-      previousValue: null,
-      newValue: serialize(appt),
-    });
-
-    return appt;
+      durationMin: input.durationMin,
+      status: input.status,
+      notes: input.notes ?? null,
+      conflictOverride,
+      conflictOverrideById: conflictOverride ? actor.id : null,
+      conflictOverrideReason: conflictOverride ? input.overrideReason ?? null : null,
+      createdById: actor.id,
+    },
+    include: APPOINTMENT_INCLUDE,
   });
+
+  await writeHistory(tx, {
+    appointmentId: appt.id,
+    previousStatus: null,
+    newStatus: appt.status,
+    changedById: actor.id,
+  });
+  await writeAppointmentAudit(tx, {
+    userId: actor.id,
+    action: "appointment.created",
+    recordId: appt.id,
+    previousValue: null,
+    newValue: serialize(appt),
+  });
+  await onAppointmentBooked(tx, appt, actor.id);
+
+  return appt;
 }
 
 /** Handles edit, drag-move and resize alike — they're all a schedule/detail update. */
@@ -294,6 +310,9 @@ export async function updateAppointment(actor: Actor, rawInput: unknown): Promis
       previousValue: serialize(existing),
       newValue: serialize(updated),
     });
+    if (input.startTime && input.startTime.getTime() !== existing.startTime.getTime()) {
+      await onAppointmentRescheduled(tx, updated);
+    }
 
     return updated;
   });
@@ -337,6 +356,9 @@ export async function changeStatus(actor: Actor, rawInput: unknown): Promise<App
       previousValue: { status: existing.status },
       newValue: { status: input.status },
     });
+    if (input.status === "ARRIVED" || input.status === "IN_SURGERY" || input.status === "COMPLETED") {
+      await onAppointmentProgressed(tx, updated, actor.id, now);
+    }
 
     return updated;
   });
@@ -379,6 +401,7 @@ export async function cancelAppointment(actor: Actor, rawInput: unknown): Promis
       previousValue: { status: existing.status },
       newValue: { status: "CANCELLED", cancellationReason },
     });
+    await onAppointmentCancelled(tx, updated);
 
     return updated;
   });
@@ -421,6 +444,7 @@ export async function markFta(actor: Actor, rawInput: unknown): Promise<Appointm
       previousValue: { status: existing.status },
       newValue: { status: "FTA", ftaReason },
     });
+    await onAppointmentMissed(tx, updated, actor.id, now);
 
     return updated;
   });

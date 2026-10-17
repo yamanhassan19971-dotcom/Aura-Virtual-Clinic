@@ -87,6 +87,81 @@ enum TaskStatus {
   CANCELLED
 }
 
+// Phase 5 enums ---------------------------------------------------------
+
+// Where an enquiry stands in AURA's journey: first message (WhatsApp agent)
+// -> call slot booked -> free consultation booked -> attended. THINKING is a
+// call that ended "I'll think about it" with an agreed follow-up date.
+enum LeadStage {
+  NEW
+  CALL_BOOKED
+  THINKING
+  CONSULT_BOOKED
+  ATTENDED
+  LOST
+}
+
+enum LeadSource {
+  FACEBOOK_AD
+  INSTAGRAM
+  GOOGLE
+  WEBSITE
+  REFERRAL
+  WALK_IN
+  PHONE_CALL
+  OTHER
+}
+
+enum LeadInterest {
+  IMPLANTS
+  SMILE_4D
+  ORTHODONTICS
+  HOLLYWOOD_SMILE
+  GENERAL
+  OTHER
+}
+
+enum LeadActivityKind {
+  CREATED
+  REPLIED
+  CALL_BOOKED
+  CALL_NO_ANSWER
+  CALL_REACHED
+  WHATSAPP_SENT
+  THINKING
+  CONSULT_BOOKED
+  ATTENDED
+  LOST
+  REOPENED
+  NOTE
+}
+
+enum FollowUpKind {
+  CONFIRM_BOOKING
+  REMIND_DAY_BEFORE
+  REMIND_3H
+  POST_OP_EVENING
+  POST_OP_NEXT_DAY
+  POST_OP_WEEK
+  PLAN_DECISION
+  SATISFACTION
+  REVIEW_REQUEST
+  RECALL
+  REBOOK_MISSED
+  CUSTOM
+}
+
+enum FollowUpChannel {
+  WHATSAPP
+  CALL
+}
+
+enum FollowUpStatus {
+  DUE
+  DONE
+  SKIPPED
+}
+
 // Phase 3 enums ---------------------------------------------------------
 
 enum DentitionType {
@@ -199,6 +274,8 @@ model Practice {
   treatmentPlans        TreatmentPlan[]
   payments              Payment[]
   refundRequests        RefundRequest[]
+  leads                 Lead[]
+  followUps             FollowUp[]
 
   @@map("practices")
 }
@@ -272,6 +349,13 @@ model User {
   refundsRequested        RefundRequest[]     @relation("RefundCreatedBy")
   refundsProcessed        RefundRequest[]     @relation("RefundProcessedBy")
 
+  // Phase 5 back-relations
+  leadsCreated       Lead[]         @relation("LeadCreatedBy")
+  leadsAssigned      Lead[]         @relation("LeadAssignedTo")
+  leadActivities     LeadActivity[]
+  followUpsCreated   FollowUp[]     @relation("FollowUpCreatedBy")
+  followUpsCompleted FollowUp[]     @relation("FollowUpCompletedBy")
+
   @@index([practiceId])
   @@map("users")
 }
@@ -281,6 +365,8 @@ model Practitioner {
   practiceId    String  @map("practice_id")
   userId        String? @unique @map("user_id")
   name          String
+  // Phase 5: how patients' WhatsApp messages name the doctor, e.g. "د. وجيه".
+  nameAr        String? @map("name_ar")
   title         String // e.g. "Dentist", "Hygienist"
   colorHex      String  @default("#3B82F6") @map("color_hex")
   defaultRoomId String? @map("default_room_id")
@@ -390,6 +476,8 @@ model Patient {
   treatmentPlans   TreatmentPlan[]
   payments         Payment[]
   refundRequests   RefundRequest[]
+  leads            Lead[]
+  followUps        FollowUp[]
 
   @@index([practiceId])
   @@index([lastName, firstName])
@@ -642,6 +730,9 @@ model AppointmentType {
   colorHex           String  @default("#3B82F6") @map("color_hex")
   active             Boolean @default(true)
   sortOrder          Int     @default(0) @map("sort_order")
+  // Phase 5: completing an appointment of this type schedules the post-op
+  // follow-up messages (same evening, next day, about a week later).
+  postOpFollowUp     Boolean @default(false) @map("post_op_follow_up")
 
   practice     Practice      @relation(fields: [practiceId], references: [id])
   appointments Appointment[]
@@ -695,6 +786,8 @@ model Appointment {
   clinicalNotes   ClinicalNote[]
   tasks           PatientTask[]
   chartEntries    ChartEntry[]
+  followUps       FollowUp[]
+  consultForLeads Lead[]                     @relation("LeadConsultation")
 
   @@index([practitionerId, date])
   @@index([practiceId, date])
@@ -909,6 +1002,7 @@ model TreatmentPlan {
   items          TreatmentPlanItem[]
   payments       Payment[]
   refundRequests RefundRequest[]
+  followUps      FollowUp[]
 
   @@index([practiceId, status])
   @@index([patientId])
@@ -1027,4 +1121,105 @@ model AuditLog {
 
   @@index([recordType, recordId])
   @@map("audit_log")
+}
+
+// Phase 5: patient pipeline and follow-up --------------------------------
+
+// One enquiry from a WhatsApp message, ad, call or walk-in. Holds the
+// "handoff card" so the caller never asks the patient to repeat their story.
+// Becomes linked to a Patient when the free consultation is booked.
+model Lead {
+  id         String       @id @default(cuid())
+  practiceId String       @map("practice_id")
+  leadNumber String       @unique @map("lead_number")
+  name       String
+  phone      String
+  source     LeadSource
+  sourceNote String?      @map("source_note") // campaign name, or who referred them
+  interest   LeadInterest
+  forWhom    String?      @map("for_whom") // "himself", "his daughter (9)"
+  location   String?
+  keyWords   String?      @map("key_words") // what matters to them, in their words
+  toldSoFar  String?      @map("told_so_far") // price range given, "consultation is free"
+  stage      LeadStage    @default(NEW)
+  lostReason String?      @map("lost_reason")
+
+  firstMessageAt  DateTime  @map("first_message_at")
+  firstReplyAt    DateTime? @map("first_reply_at")
+  callAt          DateTime? @map("call_at") // next call slot / agreed follow-up time
+  callAttempts    Int       @default(0) @map("call_attempts")
+  callBookedAt    DateTime? @map("call_booked_at")
+  consultBookedAt DateTime? @map("consult_booked_at")
+  attendedAt      DateTime? @map("attended_at")
+  closedAt        DateTime? @map("closed_at")
+
+  assignedToUserId     String? @map("assigned_to_user_id")
+  patientId            String? @map("patient_id")
+  consultAppointmentId String? @map("consult_appointment_id")
+
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  practice           Practice       @relation(fields: [practiceId], references: [id])
+  assignedTo         User?          @relation("LeadAssignedTo", fields: [assignedToUserId], references: [id])
+  createdBy          User?          @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  patient            Patient?       @relation(fields: [patientId], references: [id])
+  consultAppointment Appointment?   @relation("LeadConsultation", fields: [consultAppointmentId], references: [id])
+  activities         LeadActivity[]
+
+  @@index([practiceId, stage])
+  @@index([practiceId, firstMessageAt])
+  @@index([consultAppointmentId])
+  @@map("leads")
+}
+
+model LeadActivity {
+  id          String           @id @default(cuid())
+  leadId      String           @map("lead_id")
+  kind        LeadActivityKind
+  note        String?
+  createdById String?          @map("created_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  lead      Lead  @relation(fields: [leadId], references: [id])
+  createdBy User? @relation(fields: [createdById], references: [id])
+
+  @@index([leadId])
+  @@map("lead_activities")
+}
+
+// One message or call the team owes a patient: booking reminders, post-op
+// check-ins, plan follow-up, satisfaction, review request, recall, no-show
+// rebooking. Generated automatically by the appointment and billing
+// services; rows are never deleted, only completed or skipped.
+model FollowUp {
+  id                String          @id @default(cuid())
+  practiceId        String          @map("practice_id")
+  patientId         String          @map("patient_id")
+  appointmentId     String?         @map("appointment_id")
+  planId            String?         @map("plan_id")
+  kind              FollowUpKind
+  channel           FollowUpChannel
+  dueAt             DateTime        @map("due_at")
+  status            FollowUpStatus  @default(DUE)
+  note              String? // CUSTOM follow-ups: what to do
+  outcome           String?
+  satisfactionScore Int?            @map("satisfaction_score")
+  completedAt       DateTime?       @map("completed_at")
+  completedById     String?         @map("completed_by")
+  createdById       String?         @map("created_by")
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  practice    Practice       @relation(fields: [practiceId], references: [id])
+  patient     Patient        @relation(fields: [patientId], references: [id])
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id])
+  plan        TreatmentPlan? @relation(fields: [planId], references: [id])
+  completedBy User?          @relation("FollowUpCompletedBy", fields: [completedById], references: [id])
+  createdBy   User?          @relation("FollowUpCreatedBy", fields: [createdById], references: [id])
+
+  @@index([practiceId, status, dueAt])
+  @@index([patientId])
+  @@index([appointmentId])
+  @@map("follow_ups")
 }

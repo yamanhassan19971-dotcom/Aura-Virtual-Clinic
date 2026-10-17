@@ -8,6 +8,10 @@ import { prisma } from "./db";
 export const test = base.extend({
   page: async ({ page }, use) => {
     await prisma.auditLog.deleteMany();
+    // Phase 5: follow-ups and leads reference patients, appointments and plans.
+    await prisma.followUp.deleteMany();
+    await prisma.leadActivity.deleteMany();
+    await prisma.lead.deleteMany();
     await prisma.appointmentStatusHistory.deleteMany();
     await prisma.appointment.deleteMany();
     // Same reasoning for the dental chart — patients are reused across spec
