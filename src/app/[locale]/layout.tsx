@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -12,6 +12,15 @@ const notoArabic = Noto_Sans_Arabic({ variable: "--font-arabic", subsets: ["arab
 export const metadata: Metadata = {
   title: "AURA Dental PMS",
   description: "Dental practice appointment diary",
+};
+
+// viewport-fit=cover lets the shell pad itself around the iPhone notch and
+// home bar (env(safe-area-inset-*)); themeColor tints the phone status bar.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0f2747",
 };
 
 export function generateStaticParams() {

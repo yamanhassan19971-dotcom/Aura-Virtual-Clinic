@@ -27,7 +27,7 @@ export default async function TreatmentPlansPage({ searchParams }: { searchParam
     <Link
       key={value}
       href={`/treatment-plans?status=${value}`}
-      className={`rounded-full border px-3 py-1 text-sm ${
+      className={`shrink-0 rounded-full border px-3 py-1 text-sm ${
         active
           ? "border-[var(--color-blue)] bg-[var(--color-blue)] text-white"
           : "border-[var(--color-border)] bg-white text-gray-600 hover:bg-gray-50"
@@ -39,11 +39,11 @@ export default async function TreatmentPlansPage({ searchParams }: { searchParam
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--color-border)] bg-white px-6 py-4">
+      <div className="border-b border-[var(--color-border)] bg-white px-4 md:px-6 py-4">
         <h1 className="text-xl font-semibold text-[var(--color-text)]">{t("title")}</h1>
       </div>
-      <div className="flex flex-col gap-4 p-6">
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-4 p-4 md:p-6">
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto whitespace-nowrap px-4 sm:mx-0 sm:flex-wrap sm:px-0">
           {FILTERS.map((f) => chip(f, t(`status.${f}`), counts[f] ?? 0, status === f))}
           {chip("ALL", t("allStatuses"), total, status === undefined)}
         </div>
@@ -53,7 +53,38 @@ export default async function TreatmentPlansPage({ searchParams }: { searchParam
           <p className="text-sm text-gray-400">{t("listEmpty")}</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-white">
-            <table className="w-full min-w-[720px] text-sm">
+            <ul className="divide-y divide-[var(--color-border)] md:hidden">
+              {plans.map((plan) => (
+                <li key={plan.id}>
+                  <Link
+                    href={`/patients/${plan.patient.id}/treatment-plans`}
+                    className="flex flex-col gap-1 px-4 py-3 active:bg-gray-50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="font-medium text-[var(--color-blue)]">
+                        {plan.patient.firstName} {plan.patient.lastName}
+                      </span>
+                      <span className="shrink-0 font-medium">{formatUsd(plan.balance.totalCents)}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span>{plan.title}</span>
+                      <PlanStatusBadge status={plan.status} />
+                    </div>
+                    {plan.statusReason && <span className="text-xs text-gray-400">{plan.statusReason}</span>}
+                    <div className="flex flex-wrap gap-x-2 text-xs text-gray-500">
+                      <bdi dir="ltr">{plan.patient.phone ?? plan.patient.patientCode}</bdi>
+                      <span>{plan.practitioner?.name ?? "—"}</span>
+                      {planIsBillable(plan.status) && (
+                        <span>
+                          {t("balance")}: {formatUsd(plan.balance.balanceCents)}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <table className="hidden w-full min-w-[720px] text-sm md:table">
               <thead>
                 <tr className="border-b border-[var(--color-border)] text-xs font-semibold uppercase tracking-wide text-gray-400">
                   <th className="px-4 py-3 text-start">{t("patient")}</th>

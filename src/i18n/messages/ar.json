@@ -1,5 +1,6 @@
 {
   "common": {
+    "more": "المزيد",
     "appName": "أورا لإدارة العيادات السنية",
     "save": "حفظ",
     "cancel": "إلغاء",
@@ -25,6 +26,8 @@
     "practitioner": "الطبيب"
   },
   "nav": {
+    "menu": "القائمة",
+    "closeMenu": "سكّر القائمة",
     "dashboard": "لوحة التحكم",
     "appointments": "المواعيد",
     "patients": "المرضى",

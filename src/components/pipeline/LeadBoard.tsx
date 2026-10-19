@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { formatTime } from "@/lib/time";
 import { NewLeadModal } from "@/components/pipeline/NewLeadModal";
 import { primaryButton } from "@/components/pipeline/usePipelineAction";
+import { BELOW_LG, useMediaQuery } from "@/components/ui/useMediaQuery";
 
 export type LeadCardView = {
   id: string;
@@ -118,6 +119,7 @@ export function LeadBoard({
   const [creating, setCreating] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const visible = showClosed ? CLOSED_COLUMNS : OPEN_COLUMNS;
+  const compact = useMediaQuery(BELOW_LG);
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,7 +129,7 @@ export function LeadBoard({
             + {t("new")}
           </button>
         )}
-        <form className="flex-1">
+        <form className="min-w-0 flex-1">
           <input
             name="q"
             defaultValue={initialQuery}
@@ -149,13 +151,36 @@ export function LeadBoard({
         </div>
       </div>
 
-      <div className="-mx-1 overflow-x-auto pb-2">
-        <div className={`grid min-w-[900px] gap-3 px-1 ${showClosed ? "grid-cols-2" : "grid-cols-4"}`}>
+      {/* Below lg the stages become a swipeable row (one column per screen on
+          a phone, two on an iPad in portrait); the chips jump to a stage. */}
+      {compact && (
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 md:-mx-6 md:px-6">
+          {visible.map((stage) => (
+            <button
+              key={stage}
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(`lead-stage-${stage}`)
+                  ?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" })
+              }
+              className="shrink-0 rounded-full border border-[var(--color-border)] bg-white px-3 py-1 text-sm text-gray-600"
+            >
+              {t(`stage.${stage}`)} <span className="text-gray-400">{columns[stage].length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="-mx-4 snap-x snap-mandatory scroll-px-4 overflow-x-auto px-4 pb-2 md:-mx-6 md:scroll-px-6 md:px-6 lg:mx-0 lg:snap-none lg:px-0">
+        <div
+          className={`flex gap-3 lg:grid lg:min-w-[900px] lg:px-1 ${showClosed ? "lg:grid-cols-2" : "lg:grid-cols-4"}`}
+        >
           {visible.map((stage) => (
             <section
               key={stage}
+              id={`lead-stage-${stage}`}
               data-testid={`lead-column-${stage}`}
-              className={`flex flex-col gap-2 rounded-lg border border-t-4 border-[var(--color-border)] bg-gray-50/70 p-2.5 ${COLUMN_ACCENT[stage]}`}
+              className={`flex w-[85%] shrink-0 snap-start flex-col gap-2 self-start rounded-lg border border-t-4 border-[var(--color-border)] bg-gray-50/70 p-2.5 md:w-[46%] lg:w-auto lg:self-stretch ${COLUMN_ACCENT[stage]}`}
             >
               <header className="px-1">
                 <div className="flex items-center justify-between">

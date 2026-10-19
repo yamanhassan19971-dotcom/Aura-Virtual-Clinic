@@ -19,7 +19,7 @@ export default async function PatientOverviewPage({ params }: { params: Promise<
     <>
       <OverviewPanel overview={overview} patientId={patientId} canViewClinical={canViewClinical} />
       {followUps && (
-        <div className="px-6 pb-6">
+        <div className="px-4 md:px-6 pb-6">
           <PatientFollowUps
             patientId={patientId}
             items={followUps}

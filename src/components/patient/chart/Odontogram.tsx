@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import type { ToothSurfaceCode } from "@/lib/dental/chart-item-catalog";
 import { DECIDUOUS_TEETH, PERMANENT_TEETH, hasOcclusalSurface, lowerArchOrder, upperArchOrder, type ToothInfo } from "@/lib/dental/teeth";
@@ -53,7 +54,7 @@ function ToothBox({
           on it), so the outer box is a plain, non-interactive <div>. */}
       <div
         title={title}
-        className={`relative flex h-12 w-12 flex-col items-center justify-center rounded-md border-2 transition-colors ${wholeToothClass} ${
+        className={`relative flex h-10 w-10 flex-col items-center justify-center rounded-md border-2 lg:h-12 lg:w-12 transition-colors ${wholeToothClass} ${
           selected ? "ring-2 ring-[var(--color-blue)] ring-offset-1" : ""
         }`}
       >
@@ -132,7 +133,7 @@ function ArchRow({
           row and silently swap quadrants, corrupting the chart's clinical
           meaning. Tooth numbers are digits (bidi-neutral either way), so
           this has no effect on how they read. */}
-      <div dir="ltr" className="flex flex-wrap justify-center gap-1.5">
+      <div dir="ltr" className="flex justify-center gap-1 lg:gap-1.5">
         {teeth.map((tooth) => (
           <ToothBox
             key={tooth.fdi}
@@ -169,19 +170,33 @@ export function Odontogram({
 
   const rowProps = { toothSummaries, selectedTooth, selectedSurface, onSelect };
 
+  // When the chart is wider than the screen, open it centred on the midline
+  // rather than at one end of the arch. RTL pages report scrollLeft as <= 0.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    const centre = (el.scrollWidth - el.clientWidth) / 2;
+    el.scrollLeft = getComputedStyle(el).direction === "rtl" ? -centre : centre;
+  }, [mode]);
+
   return (
-    <div className="flex flex-col items-center gap-4 rounded-lg border border-[var(--color-border)] bg-white p-6">
-      <p className="text-xs text-gray-400">{t("upperArch")}</p>
-      {(mode === "PERMANENT" || mode === "MIXED") && <ArchRow teeth={permanentUpper} {...rowProps} />}
-      {(mode === "DECIDUOUS" || mode === "MIXED") && (
-        <ArchRow teeth={deciduousUpper} label={mode === "MIXED" ? t("deciduous") : undefined} {...rowProps} />
-      )}
-      <div className="h-px w-full max-w-md bg-[var(--color-border)]" />
-      {(mode === "DECIDUOUS" || mode === "MIXED") && (
-        <ArchRow teeth={deciduousLower} label={mode === "MIXED" ? t("deciduous") : undefined} {...rowProps} />
-      )}
-      {(mode === "PERMANENT" || mode === "MIXED") && <ArchRow teeth={permanentLower} {...rowProps} />}
-      <p className="text-xs text-gray-400">{t("lowerArch")}</p>
+    // Both arches scroll sideways together on a phone, so the quadrants
+    // always stay aligned above each other instead of wrapping.
+    <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-[var(--color-border)] bg-white p-4 md:p-6">
+      <div className="mx-auto flex w-max flex-col items-center gap-4">
+        <p className="text-xs text-gray-400">{t("upperArch")}</p>
+        {(mode === "PERMANENT" || mode === "MIXED") && <ArchRow teeth={permanentUpper} {...rowProps} />}
+        {(mode === "DECIDUOUS" || mode === "MIXED") && (
+          <ArchRow teeth={deciduousUpper} label={mode === "MIXED" ? t("deciduous") : undefined} {...rowProps} />
+        )}
+        <div className="h-px w-full max-w-md bg-[var(--color-border)]" />
+        {(mode === "DECIDUOUS" || mode === "MIXED") && (
+          <ArchRow teeth={deciduousLower} label={mode === "MIXED" ? t("deciduous") : undefined} {...rowProps} />
+        )}
+        {(mode === "PERMANENT" || mode === "MIXED") && <ArchRow teeth={permanentLower} {...rowProps} />}
+        <p className="text-xs text-gray-400">{t("lowerArch")}</p>
+      </div>
     </div>
   );
 }

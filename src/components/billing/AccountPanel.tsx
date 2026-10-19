@@ -255,7 +255,7 @@ export function AccountPanel({
   }
 
   return (
-    <div className="flex flex-col gap-5 p-6">
+    <div className="flex flex-col gap-5 p-4 md:p-6">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <SummaryTile label={t("billed")} value={formatUsd(summary.billedCents)} />
         <SummaryTile label={t("paid")} value={formatUsd(summary.paidCents - summary.refundedCents)} />

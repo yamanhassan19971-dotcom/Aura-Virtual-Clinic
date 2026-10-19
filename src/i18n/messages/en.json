@@ -1,5 +1,6 @@
 {
   "common": {
+    "more": "More",
     "appName": "AURA Dental PMS",
     "save": "Save",
     "cancel": "Cancel",
@@ -25,6 +26,8 @@
     "practitioner": "Practitioner"
   },
   "nav": {
+    "menu": "Menu",
+    "closeMenu": "Close menu",
     "dashboard": "Dashboard",
     "appointments": "Appointments",
     "patients": "Patients",

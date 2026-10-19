@@ -1,6 +1,6 @@
 "use client";
 
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { useTranslations } from "next-intl";
 import type { Practitioner, WorkingHours } from "@prisma/client";
 import type { AppointmentWithRelations } from "@/lib/services/appointment-service";
@@ -35,7 +35,12 @@ export function DiaryGrid({
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const t = useTranslations("diary");
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  // On touch screens a drag needs a short press-and-hold, so a normal swipe
+  // over an appointment still scrolls the diary instead of moving it.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } })
+  );
 
   const weekday = date.getDay();
 

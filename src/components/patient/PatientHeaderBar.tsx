@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { BELOW_MD, useMediaQuery } from "@/components/ui/useMediaQuery";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import type { AppointmentType, MedicalAlert, Patient, PatientFlag, Practitioner, Role, Room } from "@prisma/client";
@@ -93,9 +94,74 @@ export function PatientHeaderBar({
     }
   }
 
+  const isPhone = useMediaQuery(BELOW_MD);
+  const hasSecondaryActions =
+    canEditDemo || canViewChart || canMedical || canAdminNotes || canDocs || canClinicalNotes || canArchive;
+  const secondaryActions = hasSecondaryActions ? (
+    <>
+      {canEditDemo && (
+        <Link
+          href={`/patients/${patient.id}/details?edit=1`}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          {tQuick("editDetails")}
+        </Link>
+      )}
+      {canViewChart && (
+        <Link
+          href={`/patients/${patient.id}/chart`}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          {tQuick("openChart")}
+        </Link>
+      )}
+      {canMedical && (
+        <Link
+          href={`/patients/${patient.id}/medical?new=1`}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          {tQuick("newMedicalHistory")}
+        </Link>
+      )}
+      {canAdminNotes && (
+        <Link
+          href={`/patients/${patient.id}/notes?new=1`}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          {tQuick("addNote")}
+        </Link>
+      )}
+      {canDocs && (
+        <Link
+          href={`/patients/${patient.id}/documents?upload=1`}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          {tQuick("uploadDocument")}
+        </Link>
+      )}
+      {canClinicalNotes && (
+        <Link
+          href={`/patients/${patient.id}/history?new=1`}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          {tQuick("createClinicalNote")}
+        </Link>
+      )}
+      {canArchive && (
+        <button
+          type="button"
+          onClick={() => setArchiveOpen(true)}
+          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
+        >
+          {status === "ARCHIVED" ? t("reactivatePatient") : t("archivePatient")}
+        </button>
+      )}
+    </>
+  ) : null;
+
   return (
     <div className="border-b border-[var(--color-border)] bg-white">
-      <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 md:gap-4 md:px-6 md:py-4">
         <div>
           <Link
             href={`/appointments${returnDate ? `?date=${returnDate}` : ""}`}
@@ -138,68 +204,27 @@ export function PatientHeaderBar({
               {tQuick("bookAppointment")}
             </button>
           )}
-          {canEditDemo && (
-            <Link
-              href={`/patients/${patient.id}/details?edit=1`}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {tQuick("editDetails")}
-            </Link>
-          )}
-          {canViewChart && (
-            <Link
-              href={`/patients/${patient.id}/chart`}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {tQuick("openChart")}
-            </Link>
-          )}
-          {canMedical && (
-            <Link
-              href={`/patients/${patient.id}/medical?new=1`}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {tQuick("newMedicalHistory")}
-            </Link>
-          )}
-          {canAdminNotes && (
-            <Link
-              href={`/patients/${patient.id}/notes?new=1`}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {tQuick("addNote")}
-            </Link>
-          )}
-          {canDocs && (
-            <Link
-              href={`/patients/${patient.id}/documents?upload=1`}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {tQuick("uploadDocument")}
-            </Link>
-          )}
-          {canClinicalNotes && (
-            <Link
-              href={`/patients/${patient.id}/history?new=1`}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {tQuick("createClinicalNote")}
-            </Link>
-          )}
-          {canArchive && (
-            <button
-              type="button"
-              onClick={() => setArchiveOpen(true)}
-              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              {status === "ARCHIVED" ? t("reactivatePatient") : t("archivePatient")}
-            </button>
+          {!isPhone && secondaryActions}
+          {isPhone && secondaryActions && (
+            // On phones the secondary actions fold into one "More" menu so the
+            // header doesn't push the patient's file below the fold.
+            <details className="relative">
+              <summary className="cursor-pointer list-none rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                {tCommon("more")} ▾
+              </summary>
+              <div
+                onClick={(e) => ((e.currentTarget.parentElement as HTMLDetailsElement).open = false)}
+                className="absolute start-0 z-20 mt-1 flex w-56 flex-col gap-1 rounded-md border border-[var(--color-border)] bg-white p-1.5 shadow-lg [&>*]:!border-0 [&>*]:!text-start"
+              >
+                {secondaryActions}
+              </div>
+            </details>
           )}
         </div>
       </div>
 
       {currentAppointment && (
-        <div className="border-t border-[var(--color-status-confirmed)]/20 bg-[var(--color-status-confirmed-bg)] px-6 py-2 text-sm text-[var(--color-status-confirmed)]">
+        <div className="border-t border-[var(--color-status-confirmed)]/20 bg-[var(--color-status-confirmed-bg)] px-4 py-2 md:px-6 text-sm text-[var(--color-status-confirmed)]">
           <span className="font-semibold">{t("currentAppointment")}:</span>{" "}
           {formatLongDate(currentAppointment.startTime, locale)} ·{" "}
           <bdi dir="ltr">

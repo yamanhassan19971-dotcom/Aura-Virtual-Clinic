@@ -23,7 +23,7 @@ export function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-1 rounded-md border border-[var(--color-border)] p-0.5 text-sm">
-      <GlobeIcon className="ms-1.5 text-gray-400" />
+      <GlobeIcon className="ms-1.5 hidden text-gray-400 sm:block" />
       <button
         type="button"
         onClick={() => switchTo("ar")}

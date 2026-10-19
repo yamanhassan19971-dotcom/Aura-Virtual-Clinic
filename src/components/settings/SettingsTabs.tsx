@@ -15,7 +15,7 @@ export function SettingsTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-1 border-b border-[var(--color-border)] bg-white px-6">
+    <div className="no-scrollbar flex gap-1 overflow-x-auto whitespace-nowrap border-b border-[var(--color-border)] bg-white px-4 md:px-6">
       {TABS.map((tab) => {
         const active = pathname === tab.href;
         return (

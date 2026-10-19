@@ -58,7 +58,7 @@ export function AppointmentsPanel({
   const [bookingOpen, setBookingOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 md:p-6">
       {upcoming.length === 0 && past.length === 0 && <p className="text-sm text-gray-400">{t("empty")}</p>}
 
       <section className="rounded-lg border border-[var(--color-border)] bg-white p-4">

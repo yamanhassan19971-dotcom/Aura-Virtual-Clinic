@@ -78,7 +78,7 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--color-border)] bg-white px-6 py-4">
+      <div className="border-b border-[var(--color-border)] bg-white px-4 md:px-6 py-4">
         <Link href="/leads" className="text-xs text-[var(--color-blue)] hover:underline">
           ‹ {t("back")}
         </Link>
@@ -86,7 +86,7 @@ export default async function LeadPage({ params }: { params: Promise<{ leadId: s
           {lead.name} <span className="text-sm font-normal text-gray-400" dir="ltr">{lead.leadNumber}</span>
         </h1>
       </div>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <LeadDetailPanel
           lead={view}
           messages={messages}

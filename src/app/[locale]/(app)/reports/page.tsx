@@ -77,7 +77,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-border)] bg-white px-6 py-4">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-border)] bg-white px-4 md:px-6 py-4">
         <div>
           <h1 className="text-xl font-semibold text-[var(--color-text)]">{t("title")}</h1>
           <p className="text-sm text-gray-500">{t("subtitle")}</p>
@@ -95,7 +95,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-6 p-4 md:p-6">
         <p className="text-sm text-gray-600">{t("newLeads", { count: current.newLeads })}</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <Kpi

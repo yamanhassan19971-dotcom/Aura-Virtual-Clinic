@@ -41,7 +41,7 @@ export function ClinicianTable({ practitioners: initial, rooms }: { practitioner
   }
 
   return (
-    <div className="max-w-3xl rounded-lg border border-[var(--color-border)] bg-white">
+    <div className="max-w-3xl overflow-x-auto rounded-lg border border-[var(--color-border)] bg-white">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-border)] text-start text-xs font-semibold uppercase tracking-wide text-gray-400">

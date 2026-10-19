@@ -54,8 +54,8 @@ export function DiaryToolbar({
   const allSelected = selectedPractitionerIds.length === practitioners.length;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-border)] bg-white px-6 py-3">
-      <h1 className="w-full text-lg font-semibold text-[var(--color-navy)] sm:w-auto sm:me-2">{t("title")}</h1>
+    <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] bg-white px-4 py-3 sm:gap-3 md:px-6">
+      <h1 className="hidden text-lg font-semibold text-[var(--color-navy)] sm:me-2 sm:block">{t("title")}</h1>
       <div className="flex items-center gap-1">
         <button
           type="button"
@@ -88,11 +88,13 @@ export function DiaryToolbar({
         />
       </div>
 
-      <div className="text-sm font-semibold text-[var(--color-navy)]">{formatLongDate(date, locale)}</div>
+      <div className="order-first w-full text-sm font-semibold text-[var(--color-navy)] sm:order-none sm:w-auto">
+        {formatLongDate(date, locale)}
+      </div>
 
-      <div className="ms-auto flex items-center gap-3">
+      <div className="flex w-full flex-wrap items-center gap-2 sm:ms-auto sm:w-auto sm:gap-3">
         <label className="flex items-center gap-1.5 text-sm text-gray-500">
-          {t("timeScale")}
+          <span className="hidden sm:inline">{t("timeScale")}</span>
           <select
             value={timeScale}
             onChange={(e) => onTimeScaleChange(Number(e.target.value) as TimeScale)}
@@ -107,7 +109,7 @@ export function DiaryToolbar({
         </label>
 
         <details className="relative">
-          <summary className="cursor-pointer list-none rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">
+          <summary className="cursor-pointer list-none whitespace-nowrap rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">
             {t("practitioners")} ({allSelected ? t("allPractitioners") : selectedPractitionerIds.length})
           </summary>
           <div className="absolute end-0 z-20 mt-1 w-56 rounded-md border border-[var(--color-border)] bg-white p-2 shadow-lg">
@@ -133,7 +135,7 @@ export function DiaryToolbar({
         <button
           type="button"
           onClick={onJumpToNow}
-          className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+          className="whitespace-nowrap rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
         >
           {t("jumpToNow")}
         </button>
@@ -141,7 +143,7 @@ export function DiaryToolbar({
         <button
           type="button"
           onClick={onNewAppointment}
-          className="rounded-md bg-[var(--color-blue)] px-3.5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600"
+          className="ms-auto whitespace-nowrap rounded-md bg-[var(--color-blue)] px-3.5 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 sm:ms-0"
         >
           + {t("newAppointment")}
         </button>

@@ -46,11 +46,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--color-border)] bg-white px-6 py-4">
+      <div className="border-b border-[var(--color-border)] bg-white px-4 md:px-6 py-4">
         <h1 className="text-xl font-semibold text-[var(--color-text)]">{t("title")}</h1>
         <p className="text-sm text-gray-500">{t("subtitle")}</p>
       </div>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <LeadBoard
           columns={columns}
           nowIso={now.toISOString()}

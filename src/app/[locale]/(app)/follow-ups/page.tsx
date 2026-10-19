@@ -21,11 +21,11 @@ export default async function FollowUpsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--color-border)] bg-white px-6 py-4">
+      <div className="border-b border-[var(--color-border)] bg-white px-4 md:px-6 py-4">
         <h1 className="text-xl font-semibold text-[var(--color-text)]">{t("title")}</h1>
         <p className="max-w-3xl text-sm text-gray-500">{t("subtitle")}</p>
       </div>
-      <div className="flex max-w-4xl flex-col gap-4 p-6">
+      <div className="flex max-w-4xl flex-col gap-4 p-4 md:p-6">
         <div className="flex flex-wrap gap-2">
           {FOLLOW_UP_VIEWS.map((v) => (
             <Link

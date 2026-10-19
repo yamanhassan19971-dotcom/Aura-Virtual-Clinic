@@ -54,7 +54,7 @@ export function MedicalPanel({
   }, [initialAlerts, initialHistories]);
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 md:p-6">
       <section className="rounded-lg border border-[var(--color-border)] bg-white p-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-[var(--color-text)]">{t("alerts")}</h3>
