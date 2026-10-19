@@ -9,6 +9,9 @@ const prisma = new PrismaClient();
 // so tests never depend on fragile pre-seeded appointment IDs.
 async function main() {
   await prisma.auditLog.deleteMany();
+  await prisma.followUp.deleteMany();
+  await prisma.leadActivity.deleteMany();
+  await prisma.lead.deleteMany();
   await prisma.refundRequest.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.treatmentPlanItem.deleteMany();

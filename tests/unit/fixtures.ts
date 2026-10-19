@@ -3,6 +3,10 @@ import type { Actor } from "@/lib/services/actor";
 
 export async function resetDb() {
   await prisma.auditLog.deleteMany();
+  // Phase 5: follow-ups and leads reference patients, appointments and plans.
+  await prisma.followUp.deleteMany();
+  await prisma.leadActivity.deleteMany();
+  await prisma.lead.deleteMany();
   // Phase 4: refunds reference payments, both reference plans.
   await prisma.refundRequest.deleteMany();
   await prisma.payment.deleteMany();

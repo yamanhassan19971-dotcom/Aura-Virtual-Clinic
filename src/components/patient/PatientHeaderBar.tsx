@@ -122,7 +122,7 @@ export function PatientHeaderBar({
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-gray-500">
             <span>{tCommon("patientId")}: {patient.patientCode}</span>
             <span>{t("age", { age })}</span>
-            <bdi dir="ltr">{new Intl.DateTimeFormat(locale).format(patient.dateOfBirth)}</bdi>
+            <bdi>{new Intl.DateTimeFormat(locale).format(patient.dateOfBirth)}</bdi>
             {patient.phone && <bdi dir="ltr">{patient.phone}</bdi>}
             {patient.email && <span>{patient.email}</span>}
           </p>

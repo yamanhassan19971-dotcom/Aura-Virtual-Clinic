@@ -62,8 +62,16 @@ async function main() {
     const id = `aura-apptype-${i}`;
     await prisma.appointmentType.upsert({
       where: { id },
-      update: {},
-      create: { id, practiceId: practice.id, name: type.name, defaultDurationMin: type.minutes, colorHex: type.color, sortOrder: i },
+      update: { postOpFollowUp: type.postOp ?? false },
+      create: {
+        id,
+        practiceId: practice.id,
+        name: type.name,
+        defaultDurationMin: type.minutes,
+        colorHex: type.color,
+        sortOrder: i,
+        postOpFollowUp: type.postOp ?? false,
+      },
     });
   }
 
@@ -105,12 +113,13 @@ async function main() {
     const id = `aura-practitioner-${doctor.key}`;
     await prisma.practitioner.upsert({
       where: { id },
-      update: {},
+      update: { nameAr: doctor.nameAr },
       create: {
         id,
         practiceId: practice.id,
         userId: user.id,
         name: doctor.name,
+        nameAr: doctor.nameAr,
         title: doctor.title,
         colorHex: doctor.color,
         defaultRoomId: rooms[i % rooms.length].id,

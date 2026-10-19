@@ -118,7 +118,7 @@ export async function OverviewPanel({
 
       <Card title={t("recentDocuments")}>
         {recentDocuments.length === 0 ? (
-          <p className="text-sm text-gray-400">{t("noOutstanding")}</p>
+          <p className="text-sm text-gray-400">{t("noDocuments")}</p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {recentDocuments.map((doc) => (
