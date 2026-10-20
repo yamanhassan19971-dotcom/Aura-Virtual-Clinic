@@ -45,7 +45,7 @@ export function ChartPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 rounded-md border border-[var(--color-border)] bg-white p-0.5 text-sm">
           {(["odontogram", "history", "bpe"] as Section[]).map((s) => (

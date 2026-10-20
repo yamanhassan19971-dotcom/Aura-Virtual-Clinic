@@ -39,7 +39,7 @@ export function PatientTabs({ patientId, canViewClinical }: { patientId: string;
   const base = `/patients/${patientId}`;
 
   return (
-    <div className="flex flex-wrap gap-1 border-b border-[var(--color-border)] bg-white px-6">
+    <div className="no-scrollbar flex gap-1 overflow-x-auto whitespace-nowrap border-b border-[var(--color-border)] bg-white px-2 md:px-6">
       {TABS.map((tab) => {
         // Receptionist has full demographic/administrative access but no
         // clinical access — the Medical and Clinical History tabs are not
@@ -61,6 +61,7 @@ export function PatientTabs({ patientId, canViewClinical }: { patientId: string;
           <Link
             key={tab}
             href={`${base}/${slug}${extraQuery}`}
+            ref={active ? (el) => el?.scrollIntoView({ block: "nearest", inline: "nearest" }) : undefined}
             className={`border-b-2 px-3 py-3 text-sm font-medium ${
               active
                 ? "border-[var(--color-blue)] text-[var(--color-blue)]"

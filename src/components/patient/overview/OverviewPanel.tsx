@@ -29,7 +29,7 @@ export async function OverviewPanel({
     overview;
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 p-4 md:p-6 md:grid-cols-2">
       <Card title={t("nextAppointment")}>
         {nextAppointment ? (
           <Link href={`/patients/${patientId}/appointments`} className="block hover:opacity-80">

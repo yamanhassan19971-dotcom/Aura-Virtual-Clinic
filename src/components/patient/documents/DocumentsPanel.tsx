@@ -160,7 +160,7 @@ export function DocumentsPanel({
   const isPreviewable = (mimeType: string) => PREVIEWABLE_MIME_PREFIXES.some((p) => mimeType.startsWith(p));
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[var(--color-text)]">{t("title")}</h3>
         {canManage && (

@@ -1,5 +1,7 @@
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/shell/LanguageSwitcher";
+import { MenuButton } from "@/components/shell/NavDrawer";
+import { SignOutIcon } from "@/components/shell/icons";
 import { signOutAction } from "@/lib/actions/sign-out-action";
 
 export function TopBar({
@@ -12,13 +14,16 @@ export function TopBar({
   userRole: string;
 }) {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-white px-6">
-      <div className="text-sm text-gray-500">
-        <span className="font-medium text-[var(--color-text)]">{userName}</span>
-        <span className="mx-2 text-gray-300">•</span>
-        <RoleLabel role={userRole} />
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-white px-4 pt-[env(safe-area-inset-top)] lg:h-16 lg:px-6">
+      <div className="flex min-w-0 items-center gap-2 text-sm text-gray-500">
+        <MenuButton />
+        <span className="truncate font-medium text-[var(--color-text)]">{userName}</span>
+        <span className="hidden text-gray-300 sm:inline">•</span>
+        <span className="hidden sm:inline">
+          <RoleLabel role={userRole} />
+        </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 lg:gap-3">
         <LanguageSwitcher />
         <form
           action={async () => {
@@ -48,9 +53,11 @@ function SignOutButton() {
   return (
     <button
       type="submit"
-      className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+      aria-label={t("signOut")}
+      className="rounded-md border border-[var(--color-border)] p-2 text-sm font-medium text-gray-600 hover:bg-gray-50 sm:px-3 sm:py-1.5"
     >
-      {t("signOut")}
+      <SignOutIcon className="sm:hidden" />
+      <span className="hidden sm:inline">{t("signOut")}</span>
     </button>
   );
 }

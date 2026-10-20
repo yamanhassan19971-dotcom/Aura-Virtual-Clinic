@@ -29,14 +29,15 @@ export function Modal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+    // On phones a modal rises from the bottom edge and uses the full width.
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4">
       <div
         role="dialog"
         aria-modal
         aria-label={title}
-        className={`w-full ${widthClass} max-h-[90vh] overflow-auto rounded-lg bg-white shadow-xl`}
+        className={`w-full ${widthClass} max-h-[92dvh] overflow-auto rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-xl sm:max-h-[90vh] sm:rounded-lg sm:pb-0`}
       >
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-3.5">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--color-border)] bg-white px-4 py-3.5 sm:px-5">
           <h2 className="text-base font-semibold text-[var(--color-text)]">{title}</h2>
           <button
             type="button"
@@ -47,7 +48,7 @@ export function Modal({
             ✕
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-4 sm:p-5">{children}</div>
       </div>
     </div>,
     document.body

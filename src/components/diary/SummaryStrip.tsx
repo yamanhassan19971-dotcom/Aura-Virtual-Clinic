@@ -18,12 +18,12 @@ export function SummaryStrip({
   const t = useTranslations("summary");
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] bg-white px-6 py-2.5">
-      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{t("title")}</span>
+    <div className="no-scrollbar flex items-center gap-2 overflow-x-auto whitespace-nowrap border-b border-[var(--color-border)] bg-white px-4 py-2.5 sm:flex-wrap md:px-6">
+      <span className="hidden text-xs font-semibold uppercase tracking-wide text-gray-400 sm:inline">{t("title")}</span>
       <button
         type="button"
         onClick={() => onFilterChange(null)}
-        className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+        className={`shrink-0 rounded-md border px-2.5 py-1 text-xs font-semibold ${
           activeFilter === null ? "border-[var(--color-navy)] bg-[var(--color-navy)] text-white" : "border-[var(--color-border)] text-gray-600"
         }`}
       >
@@ -37,7 +37,7 @@ export function SummaryStrip({
             key={status}
             type="button"
             onClick={() => onFilterChange(active ? null : status)}
-            className="rounded-md border px-2.5 py-1 text-xs font-semibold transition-transform"
+            className="shrink-0 rounded-md border px-2.5 py-1 text-xs font-semibold transition-transform"
             style={{
               borderColor: active ? colors.fg : "var(--color-border)",
               backgroundColor: active ? colors.fg : colors.bg,

@@ -2,6 +2,7 @@ import { redirect } from "@/i18n/navigation";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { countFollowUpsDue } from "@/lib/services/pipeline-queries";
+import { NavDrawerProvider } from "@/components/shell/NavDrawer";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { TopBar } from "@/components/shell/TopBar";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -25,7 +26,8 @@ export default async function AppLayout({
 
   return (
     <ToastProvider>
-      <div className="flex h-screen overflow-hidden bg-[var(--color-surface)]">
+      <NavDrawerProvider>
+      <div className="flex h-dvh overflow-hidden bg-[var(--color-surface)]">
         <Sidebar
           followUpsDue={followUpsDue}
           hidden={[
@@ -38,6 +40,7 @@ export default async function AppLayout({
           <main className="min-h-0 flex-1 overflow-auto">{children}</main>
         </div>
       </div>
+      </NavDrawerProvider>
     </ToastProvider>
   );
 }

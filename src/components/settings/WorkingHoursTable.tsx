@@ -44,7 +44,7 @@ export function WorkingHoursTable({ workingHours: initial }: { workingHours: Wor
   }
 
   return (
-    <div className="max-w-2xl rounded-lg border border-[var(--color-border)] bg-white">
+    <div className="max-w-2xl overflow-x-auto rounded-lg border border-[var(--color-border)] bg-white">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-border)] text-xs font-semibold uppercase tracking-wide text-gray-400">

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { BELOW_LG, useMediaQuery } from "@/components/ui/useMediaQuery";
 import type {
   AppointmentStatus,
   AppointmentType,
@@ -69,6 +70,8 @@ export function DiaryWorkspace({
   currentUser,
 }: Props) {
   const t = useTranslations("booking");
+  const tCommon = useTranslations("common");
+  const compact = useMediaQuery(BELOW_LG);
   const toast = useToast();
 
   const [appointments, setAppointments] = useState(initialAppointments);
@@ -308,6 +311,33 @@ export function DiaryWorkspace({
           )}
         </aside>
       </div>
+
+      {selectedAppointment && compact && (
+        // Below the lg breakpoint there's no room for the side panel, so the
+        // appointment opens as a bottom sheet over the diary.
+        <div className="fixed inset-0 z-40" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            aria-label={tCommon("close")}
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setSelectedAppointmentId(null)}
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[80dvh] overflow-auto rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl md:inset-x-auto md:end-0 md:top-0 md:bottom-0 md:max-h-none md:w-96 md:rounded-none">
+            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-gray-300 md:hidden" />
+            <AppointmentDetailsPanel
+              appointment={selectedAppointment}
+              canEdit={canEdit}
+              canCancel={canCancel}
+              canFta={canFta}
+              onClose={() => setSelectedAppointmentId(null)}
+              onStatusChange={(status) => handleStatusChange(selectedAppointment.id, status)}
+              onOpenEdit={() => setBookingState({ mode: "edit", appointment: selectedAppointment })}
+              onOpenCancel={() => setCancelTarget(selectedAppointment)}
+              onOpenFta={() => setFtaTarget(selectedAppointment)}
+            />
+          </div>
+        </div>
+      )}
 
       {bookingState && (
         <BookingModal

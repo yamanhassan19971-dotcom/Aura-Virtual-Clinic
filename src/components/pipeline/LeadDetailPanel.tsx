@@ -192,7 +192,7 @@ export function LeadDetailPanel({
         </section>
       </div>
 
-      <aside className="flex flex-col gap-4">
+      <aside className="order-first flex flex-col gap-4 lg:order-none">
         {canManage && isOpen && (
           <section className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-white p-4">
             {!lead.firstReplyAt && (
