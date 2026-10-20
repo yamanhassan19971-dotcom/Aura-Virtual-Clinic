@@ -9,5 +9,9 @@ $node = Find-NodeExe
 $log = Join-Path $LogDir "backup.log"
 $arguments = @((Join-Path $AppDir "scripts\clinic\backup.mjs"))
 if ($Label) { $arguments += @("--label", $Label) }
-& $node @arguments 2>&1 | Tee-Object -FilePath $log -Append
+# Native stderr must not count as a PowerShell error here (see start.ps1);
+# success is decided by the exit code alone.
+$ErrorActionPreference = "Continue"
+& $node @arguments 2>&1 | ForEach-Object { "$_" } | Tee-Object -FilePath $log -Append
+$ErrorActionPreference = "Stop"
 if ($LASTEXITCODE -ne 0) { throw "Backup failed; see $log" }
