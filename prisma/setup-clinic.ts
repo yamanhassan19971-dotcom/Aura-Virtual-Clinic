@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import { PrismaClient, Role } from "@prisma/client";
 import argon2 from "argon2";
 import {
@@ -11,6 +10,7 @@ import {
   AURA_PRICE_LIST,
   AURA_ROOMS,
 } from "./aura-clinic-data";
+import { generateTemporaryPassword } from "../src/lib/services/staff-service";
 
 /**
  * Go-live setup for the real clinic: creates AURA's practice, rooms,
@@ -23,17 +23,15 @@ import {
  */
 const prisma = new PrismaClient();
 
-const STAFF: Array<{ email: string; name: string; role: Role }> = [
-  { email: "admin@aura.local", name: "AURA Admin", role: Role.ADMIN },
-  { email: "manager@aura.local", name: "Practice Manager", role: Role.PRACTICE_MANAGER },
-  { email: "whatsapp@aura.local", name: "WhatsApp Desk", role: Role.RECEPTIONIST },
-  { email: "calls@aura.local", name: "Call Centre", role: Role.RECEPTIONIST },
-  { email: "reception@aura.local", name: "Reception", role: Role.RECEPTIONIST },
+// The clinic's people. Yaman is both the owner (Admin) and a doctor, so his
+// login is also his diary column; the other doctors get Doctor logins below.
+// Names are Arabic because patient messages say "معك {name}". More staff are
+// added later in Settings → Staff Accounts.
+const STAFF: Array<{ email: string; name: string; role: Role; doctorKey?: string }> = [
+  { email: "yaman@aura.local", name: "يمان حسن", role: Role.ADMIN, doctorKey: "yaman" },
+  { email: "raghad@aura.local", name: "رغد", role: Role.RECEPTIONIST },
+  { email: "hanan@aura.local", name: "حنان", role: Role.RECEPTIONIST },
 ];
-
-function oneTimePassword() {
-  return randomBytes(9).toString("base64url");
-}
 
 async function main() {
   const practice = await prisma.practice.upsert({
@@ -98,18 +96,31 @@ async function main() {
   async function ensureUser(email: string, name: string, role: Role) {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return existing;
-    const password = oneTimePassword();
+    const password = generateTemporaryPassword();
     created.push({ email, name, password });
     return prisma.user.create({
-      data: { email, name, role, practiceId: practice.id, passwordHash: await argon2.hash(password) },
+      data: {
+        email,
+        name,
+        role,
+        practiceId: practice.id,
+        passwordHash: await argon2.hash(password),
+        // One-time password: the first sign-in asks for their own.
+        mustChangePassword: true,
+      },
     });
   }
 
-  for (const staff of STAFF) await ensureUser(staff.email, staff.name, staff.role);
+  const staffUsers = new Map<string, { id: string }>();
+  for (const staff of STAFF) {
+    const user = await ensureUser(staff.email, staff.name, staff.role);
+    if (staff.doctorKey) staffUsers.set(staff.doctorKey, user);
+  }
 
   for (let i = 0; i < AURA_PRACTITIONERS.length; i++) {
     const doctor = AURA_PRACTITIONERS[i];
-    const user = await ensureUser(`${doctor.key}@aura.local`, doctor.name, Role.CLINICIAN);
+    const user =
+      staffUsers.get(doctor.key) ?? (await ensureUser(`${doctor.key}@aura.local`, doctor.name, Role.CLINICIAN));
     const id = `aura-practitioner-${doctor.key}`;
     await prisma.practitioner.upsert({
       where: { id },
@@ -132,7 +143,8 @@ async function main() {
   if (created.length === 0) {
     console.log("All staff accounts already existed; no passwords were changed.");
   } else {
-    console.log("\nNew accounts (passwords are shown ONCE, write them down now):\n");
+    console.log("\nNew accounts (passwords are shown ONCE, write them down now; each person");
+    console.log("chooses their own password at first sign-in):\n");
     for (const c of created) console.log(`  ${c.email.padEnd(26)} ${c.password}   ${c.name}`);
   }
 }

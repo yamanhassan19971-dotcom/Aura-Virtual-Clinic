@@ -39,7 +39,8 @@
     "location": "Location",
     "locationName": "Jdeidet Artouz",
     "leads": "Enquiries",
-    "followUps": "Follow-up"
+    "followUps": "Follow-up",
+    "account": "My account"
   },
   "login": {
     "title": "Sign in to AURA",
@@ -48,7 +49,9 @@
     "password": "Password",
     "submit": "Sign in",
     "invalidCredentials": "Incorrect email or password.",
-    "demoHint": "Demo accounts: admin@aura.dev, manager@aura.dev, reception@aura.dev, yaman@aura.dev — password Passw0rd!"
+    "demoHint": "Demo accounts: admin@aura.dev, manager@aura.dev, reception@aura.dev, yaman@aura.dev — password Passw0rd!",
+    "locked": "Too many wrong passwords. This account is locked for 15 minutes; ask the Admin to reset it if you've forgotten the password.",
+    "ended": "You were signed out because your account changed. Please sign in again."
   },
   "language": {
     "english": "English",
@@ -211,7 +214,9 @@
     "startTime": "Start",
     "endTime": "End",
     "saved": "Saved",
-    "priceList": "Treatments & Prices"
+    "priceList": "Treatments & Prices",
+    "staff": "Staff Accounts",
+    "backups": "Backups"
   },
   "placeholder": {
     "title": "Coming in a later phase",
@@ -1040,5 +1045,95 @@
         "INVALID_TRANSITION": "This enquiry has already moved on. Refresh the page.",
         "CONFLICT": "That time clashes with another appointment."
       }
+    },
+  "roles": {
+    "ADMIN": "Admin",
+    "PRACTICE_MANAGER": "Practice Manager",
+    "RECEPTIONIST": "Reception",
+    "CLINICIAN": "Doctor"
+  },
+  "staff": {
+    "intro": "Everyone who uses AURA signs in with their own account. Only an Admin can see this page.",
+    "name": "Name",
+    "login": "Login",
+    "role": "Role",
+    "doctor": "Doctor's diary",
+    "lastLogin": "Last sign-in",
+    "status": "Status",
+    "never": "Never",
+    "active": "Active",
+    "inactive": "Switched off",
+    "locked": "Locked",
+    "mustChange": "Must set password",
+    "noDoctor": "Not a doctor",
+    "add": "Add staff member",
+    "addTitle": "New staff account",
+    "editTitle": "Edit {name}",
+    "loginHint": "Any short address, e.g. raghad@aura.local. It's only used to sign in.",
+    "doctorHint": "Link a doctor's login to their diary column.",
+    "create": "Create account",
+    "save": "Save",
+    "edit": "Edit",
+    "resetPassword": "New password",
+    "deactivate": "Switch off",
+    "reactivate": "Switch on",
+    "you": "you",
+    "confirmReset": "Give {name} a new one-time password? They'll be signed out on every device.",
+    "confirmDeactivate": "Switch off {name}'s account? They'll be signed out and can't sign in until it's switched on again.",
+    "passwordTitle": "One-time password for {name}",
+    "passwordNote": "Write this down and give it to {name}. It is shown only now. At their first sign-in they'll choose their own password.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "done": "Done",
+    "created": "Account created",
+    "updated": "Saved",
+    "reactivated": "Account switched on",
+    "deactivated": "Account switched off",
+    "errors": {
+      "EMAIL_TAKEN": "Another account already uses this login.",
+      "PRACTITIONER_TAKEN": "That doctor already has a login.",
+      "OWN_ROLE": "You can't change your own role.",
+      "OWN_ACTIVE": "You can't switch off your own account.",
+      "LAST_ADMIN": "The clinic needs at least one active Admin.",
+      "WRONG_PASSWORD": "The current password is not correct.",
+      "SAME_PASSWORD": "Choose a password different from the current one."
     }
+  },
+  "account": {
+    "title": "My account",
+    "details": "Your details",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "New password again",
+    "rule": "At least {min} characters. A short sentence you'll remember works well.",
+    "mismatch": "The two new passwords don't match.",
+    "tooShort": "Use at least {min} characters.",
+    "changed": "Password changed",
+    "firstTitle": "Choose your own password",
+    "firstIntro": "You signed in with a one-time password. Choose a password only you know before you continue.",
+    "firstCurrent": "One-time password",
+    "continue": "Save and continue"
+  },
+  "backups": {
+    "intro": "The clinic laptop backs up every night: the whole database plus every document and image. Daily backups are kept for 30 days, then one per month for a year.",
+    "notSetUp": "Backups aren't set up on this computer. The clinic install sets them up.",
+    "never": "No backup has run yet.",
+    "lastSuccess": "Last backup",
+    "lastAttempt": "Last attempt",
+    "failed": "The last backup failed",
+    "error": "Error",
+    "location": "Saved in",
+    "size": "Database size",
+    "count": "Backups kept",
+    "documents": "Documents and images",
+    "copy": "External drive",
+    "copyOk": "Copied {when}",
+    "copyFailed": "Not copied: {error}",
+    "copyNotSet": "Not set up",
+    "howToRestore": "To go back to a backup, run restore.ps1 on the clinic laptop (see the install guide). The current data is backed up first.",
+    "banner": "Backups need attention: the last successful backup was {when}.",
+    "bannerNever": "Backups need attention: no backup has run yet.",
+    "bannerLink": "Open Backups"
+  }
 }

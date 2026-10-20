@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { LanguageSwitcher } from "@/components/shell/LanguageSwitcher";
 import { MenuButton } from "@/components/shell/NavDrawer";
 import { SignOutIcon } from "@/components/shell/icons";
@@ -17,7 +18,12 @@ export function TopBar({
     <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-white px-4 pt-[env(safe-area-inset-top)] lg:h-16 lg:px-6">
       <div className="flex min-w-0 items-center gap-2 text-sm text-gray-500">
         <MenuButton />
-        <span className="truncate font-medium text-[var(--color-text)]">{userName}</span>
+        <Link
+          href="/account"
+          className="truncate font-medium text-[var(--color-text)] hover:text-[var(--color-blue)] hover:underline"
+        >
+          {userName}
+        </Link>
         <span className="hidden text-gray-300 sm:inline">•</span>
         <span className="hidden sm:inline">
           <RoleLabel role={userRole} />
@@ -39,13 +45,8 @@ export function TopBar({
 }
 
 function RoleLabel({ role }: { role: string }) {
-  const labels: Record<string, string> = {
-    ADMIN: "Admin",
-    PRACTICE_MANAGER: "Practice Manager",
-    RECEPTIONIST: "Receptionist",
-    CLINICIAN: "Clinician",
-  };
-  return <span>{labels[role] ?? role}</span>;
+  const t = useTranslations("roles");
+  return <span>{t.has(role) ? t(role) : role}</span>;
 }
 
 function SignOutButton() {

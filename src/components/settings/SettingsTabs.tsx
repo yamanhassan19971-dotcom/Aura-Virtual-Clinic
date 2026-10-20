@@ -10,13 +10,17 @@ const TABS = [
   { href: "/settings/price-list", key: "priceList" },
 ];
 
-export function SettingsTabs() {
+export function SettingsTabs({ showStaff, showBackups }: { showStaff: boolean; showBackups: boolean }) {
   const t = useTranslations("settings");
   const pathname = usePathname();
 
   return (
     <div className="no-scrollbar flex gap-1 overflow-x-auto whitespace-nowrap border-b border-[var(--color-border)] bg-white px-4 md:px-6">
-      {TABS.map((tab) => {
+      {[
+        ...TABS,
+        ...(showStaff ? [{ href: "/settings/staff", key: "staff" }] : []),
+        ...(showBackups ? [{ href: "/settings/backups", key: "backups" }] : []),
+      ].map((tab) => {
         const active = pathname === tab.href;
         return (
           <Link

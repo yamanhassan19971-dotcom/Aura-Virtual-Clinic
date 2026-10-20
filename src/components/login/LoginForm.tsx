@@ -4,7 +4,17 @@ import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { loginAction } from "@/lib/actions/auth-actions";
 
-export function LoginForm({ locale, callbackUrl }: { locale: string; callbackUrl?: string }) {
+export function LoginForm({
+  locale,
+  callbackUrl,
+  ended = false,
+  showDemoHint = true,
+}: {
+  locale: string;
+  callbackUrl?: string;
+  ended?: boolean;
+  showDemoHint?: boolean;
+}) {
   const t = useTranslations("login");
   const [state, formAction, pending] = useActionState(loginAction, { error: null });
 
@@ -17,6 +27,12 @@ export function LoginForm({ locale, callbackUrl }: { locale: string; callbackUrl
         <h1 className="text-xl font-semibold text-[var(--color-text)]">{t("title")}</h1>
         <p className="mt-1 text-sm text-gray-500">{t("subtitle")}</p>
       </div>
+
+      {ended && !state.error && (
+        <p role="status" className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {t("ended")}
+        </p>
+      )}
 
       <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="locale" value={locale} />
@@ -46,7 +62,7 @@ export function LoginForm({ locale, callbackUrl }: { locale: string; callbackUrl
 
         {state.error && (
           <p role="alert" className="text-sm text-[var(--color-status-fta)]">
-            {t("invalidCredentials")}
+            {t(state.error === "locked" ? "locked" : "invalidCredentials")}
           </p>
         )}
 
@@ -59,7 +75,7 @@ export function LoginForm({ locale, callbackUrl }: { locale: string; callbackUrl
         </button>
       </form>
 
-      <p className="mt-6 text-center text-xs leading-relaxed text-gray-400">{t("demoHint")}</p>
+      {showDemoHint && <p className="mt-6 text-center text-xs leading-relaxed text-gray-400">{t("demoHint")}</p>}
     </div>
   );
 }
