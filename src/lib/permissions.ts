@@ -38,6 +38,7 @@ export type Permission =
   | "followUps.view"
   | "followUps.manage"
   | "settings.manage"
+  | "users.manage"
   | "reports.view";
 
 // Server-side role -> permission map. The UI reads this too (to hide
@@ -52,6 +53,10 @@ export type Permission =
 //
 // Phase 5: reception/call-centre staff own the enquiry pipeline and the
 // follow-up list; clinicians can see their patients' follow-ups.
+//
+// Phase 7: only an Admin creates staff logins, changes roles, resets
+// passwords or deactivates accounts — a Practice Manager can't grant
+// themselves (or anyone) Admin.
 //
 // Phase 4 money rules: clinicians build and present treatment plans;
 // reception takes payments and logs refund requests; only a Practice
@@ -91,6 +96,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": true,
     "refunds.process": true,
     "settings.manage": true,
+    "users.manage": true,
     "leads.view": true,
     "leads.manage": true,
     "followUps.view": true,
@@ -131,6 +137,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": true,
     "refunds.process": true,
     "settings.manage": true,
+    "users.manage": false,
     "leads.view": true,
     "leads.manage": true,
     "followUps.view": true,
@@ -171,6 +178,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": true,
     "refunds.process": false,
     "settings.manage": false,
+    "users.manage": false,
     "leads.view": true,
     "leads.manage": true,
     "followUps.view": true,
@@ -211,6 +219,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<Permission, boolean>> = {
     "refunds.request": false,
     "refunds.process": false,
     "settings.manage": false,
+    "users.manage": false,
     "leads.view": false,
     "leads.manage": false,
     "followUps.view": true,

@@ -8,7 +8,8 @@ the end of this file (or ask the session that built it) covers what shipped.
 Later phases each have their own report: `AURA-PHASE2-REPORT.md` (patient
 record), `AURA-PHASE3-REPORT.md` (dental chart), `AURA-PHASE4-REPORT.md` (treatment
 plans and payments), `AURA-PHASE5-REPORT.md` (enquiry pipeline, follow-ups, weekly KPIs) and
-`AURA-PHASE6-REPORT.md` (phone and iPad layout).
+`AURA-PHASE6-REPORT.md` (phone and iPad layout) and `AURA-PHASE7-REPORT.md` (staff accounts, backups,
+clinic install).
 
 ## Stack
 
@@ -56,8 +57,14 @@ npm run db:migrate
 npm run db:setup-clinic   # AURA practice, doctors, hours, price list, staff logins; NO demo patients
 ```
 
-It prints each new staff account's one-time password once. Re-running it is
-safe: existing accounts and prices edited in Settings are left alone.
+It prints each new staff account's one-time password once; each person
+chooses their own at first sign-in. Re-running it is safe: existing accounts
+and prices edited in Settings are left alone.
+
+On the clinic's Windows laptop, `scripts/windows/install.cmd` does all of this
+plus auto-start, nightly backups and phone access; see
+`docs/CLINIC-INSTALL-AR.md`. Backups: `node scripts/clinic/backup.mjs`;
+restore: `node scripts/clinic/restore.mjs <dump> --yes`.
 
 ## Testing
 

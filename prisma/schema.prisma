@@ -309,6 +309,14 @@ model User {
   role         Role
   active       Boolean @default(true)
 
+  // Phase 7: account security. Bumping sessionVersion signs the user out
+  // everywhere (deactivation, role change, password reset by an admin).
+  sessionVersion     Int       @default(0) @map("session_version")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  failedLogins       Int       @default(0) @map("failed_logins")
+  lockedUntil        DateTime? @map("locked_until")
+  lastLoginAt        DateTime? @map("last_login_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

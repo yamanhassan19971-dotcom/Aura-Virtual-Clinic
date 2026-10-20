@@ -1,7 +1,7 @@
 "use server";
 
 import { signIn } from "@/lib/auth";
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
 
 export async function loginAction(
   _prevState: { error: string | null },
@@ -18,6 +18,9 @@ export async function loginAction(
     });
     return { error: null };
   } catch (error) {
+    if (error instanceof CredentialsSignin && error.code === "locked") {
+      return { error: "locked" };
+    }
     if (error instanceof AuthError) {
       return { error: "invalidCredentials" };
     }
