@@ -62,6 +62,8 @@ if (Test-Path $envFile) {
 
 Write-Step "Installing AURA (this takes a few minutes)"
 Invoke-Checked "npm.cmd" @("ci", "--no-audit", "--no-fund")
+# npm ci doesn't always generate the database client on Windows; the build needs it.
+Invoke-Checked "npx.cmd" @("prisma", "generate")
 Invoke-Checked "npx.cmd" @("prisma", "migrate", "deploy")
 Invoke-Checked "npm.cmd" @("run", "build")
 
