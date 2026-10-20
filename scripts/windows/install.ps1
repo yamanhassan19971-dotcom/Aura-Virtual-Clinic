@@ -46,6 +46,11 @@ if (Test-Path $envFile) {
   $bytes = New-Object byte[] 32
   [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
   $copyDir = Read-Host "Drive letter of the backup USB drive, e.g. E (leave empty to skip)"
+  # A copy on the laptop's own disk is lost with the laptop; only an external drive helps.
+  $systemDrive = $env:SystemDrive.TrimEnd(":")
+  while ($copyDir -and $copyDir.TrimEnd(":", "\", "/") -eq $systemDrive) {
+    $copyDir = Read-Host "$systemDrive is this laptop's own disk. Enter the USB drive's letter, or leave empty to skip"
+  }
   $lines = @(
     "DATABASE_URL=`"postgresql://aura:$appPassword@localhost:5432/aura_clinic`"",
     "AUTH_SECRET=`"$([Convert]::ToBase64String($bytes))`"",
